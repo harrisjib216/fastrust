@@ -1,0 +1,25 @@
+name: Check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+      - name: Test the tool
+        run: cargo test -p catalog
+      - name: Lint
+        run: cargo clippy -p catalog -- -D warnings
+      - name: Validate every record
+        run: cargo run -p catalog -- check
+      - name: The rendered catalog matches the records
+        run: |
+          cargo run -p catalog -- render
+          git diff --exit-code -- catalog README.md

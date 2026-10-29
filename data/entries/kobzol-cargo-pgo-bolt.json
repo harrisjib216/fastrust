@@ -1,0 +1,71 @@
+{
+  "id": "https://github.com/kobzol/cargo-pgo#bolt",
+  "name": "BOLT post-link optimization (via cargo-pgo)",
+  "domain": "tooling",
+  "category": "runtime-build-settings",
+  "baseline": "A PGO-optimized release binary without BOLT",
+  "verdict": "downgrade",
+  "verdict_reason": "BOLT adds a further gain on top of PGO, but the measured gains are small and vary: about 6.1% for Android's rustc and a 1.8% mean cycle reduction for librustc_driver.so in rust-lang CI. It enlarges binaries, needs relocations kept in the binary, and cargo-pgo marks its BOLT support experimental.",
+  "evidence_tier": "B",
+  "tier_reason": "Measured by Google's Android toolchain team and the rust-lang project on rustc, independent of cargo-pgo.",
+  "claimed_speedup": "Android rustc: ~6.1% faster than the PGO-only compiler (~24.7% over baseline) at ~10.9% larger size; rust-lang librustc_driver.so: -1.8% mean cycles across primary benchmarks, with a 34 MiB (+48%) larger library",
+  "workload": "rustc compiling Android's Rust components; rustc-perf primary benchmarks",
+  "metric": "time; binary size",
+  "hardware": "",
+  "os": "Linux",
+  "toolchain": "llvm-bolt applied to libLLVM, libstd and librustc_driver after PGO and LTO",
+  "benchmark_date": "2023-12",
+  "benchmark_url": "https://android-developers.googleblog.com/2023/12/faster-rust-toolchains-for-android.html",
+  "repo_url": "https://github.com/kobzol/cargo-pgo",
+  "docs_url": "https://github.com/Kobzol/cargo-pgo/blob/main/README.md",
+  "license": "MIT",
+  "usability": "copyable",
+  "language": "Rust",
+  "platforms": "Linux ELF binaries; rust-lang disabled BOLT for its AArch64 Linux builds because of upstream BOLT bugs",
+  "install": "cargo install cargo-pgo, plus llvm-bolt and merge-fdata (LLVM 16+ release or the project's Docker image)",
+  "maintenance_status": "active",
+  "stars": 793,
+  "last_commit": "2026-04-25",
+  "one_liner": "Profile-driven code layout applied after linking; adds roughly 2-6% on top of PGO in rustc measurements, at a size cost.",
+  "how_it_is_fast": "BOLT rewrites the linked binary using a profile of which functions and blocks run hot, placing hot code together and moving cold code away. That cuts instruction-cache and page misses in large programs whose hot paths are spread across many functions, which the linker cannot see without a profile.",
+  "use_it_when": [
+    "Large Linux binaries already built with PGO",
+    "Programs limited by instruction-cache misses, such as compilers and databases"
+  ],
+  "skip_it_when": [
+    "Binary size limits",
+    "Non-Linux targets",
+    "Release pipelines that strip symbols: cargo-pgo warns against stripping when using BOLT"
+  ],
+  "caveats": [
+    "Both measurements are on rustc",
+    "The rust-lang -1.8% is a cycle count, not wall time"
+  ],
+  "tradeoffs": [
+    "Binary size grew 10.9% (Android) and 48% for librustc_driver.so (rust-lang)",
+    "Extra build step with experimental tooling"
+  ],
+  "evidence": [
+    {
+      "url": "https://android-developers.googleblog.com/2023/12/faster-rust-toolchains-for-android.html",
+      "quote": "Applying BOLT to our toolchain produces a speedup over the baseline compiler of ~24.7% at a size increase of ~10.9%. This is a speedup of ~6.1% over the PGOed compiler without BOLT."
+    },
+    {
+      "url": "https://github.com/rust-lang/rust/pull/116352",
+      "quote": "-1.8% mean improvement in cycle counts across many primary benchmarks."
+    },
+    {
+      "url": "https://github.com/rust-lang/rust/pull/116352",
+      "quote": "34 MiB (+48%) artifact size regression of"
+    },
+    {
+      "url": "https://github.com/Kobzol/cargo-pgo/blob/main/README.md",
+      "quote": "BOLT and Docker support is currently *experimental*."
+    },
+    {
+      "url": "https://github.com/rust-lang/rust/pull/133807",
+      "quote": "For the time being, disable bolt on aarch64 due to upstream bolt bugs."
+    }
+  ],
+  "checked": "2026-10-28"
+}

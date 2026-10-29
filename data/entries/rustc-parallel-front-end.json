@@ -1,0 +1,79 @@
+{
+  "id": "rustc:parallel-front-end",
+  "name": "Parallel rustc front end (-Z threads)",
+  "domain": "tooling",
+  "category": "compile-times",
+  "baseline": "cargo build with the default single-threaded rustc front end",
+  "verdict": "downgrade",
+  "verdict_reason": "With -Z threads=8 the rust-lang project measured compile-time cuts of up to 50% on real-world code, but results vary widely and memory use can rise by up to 35%. Announced for stable in 2024, it is still nightly-only in 2026, with stabilization work ongoing.",
+  "evidence_tier": "B",
+  "tier_reason": "The rust-lang Parallel Rustc Working Group measured its own toolchain change on real-world code and published a profiled example.",
+  "claimed_speedup": "Up to 50% shorter compile times with -Z threads=8; in the profiled release build of Cargo's final crate, front-end time fell from 10.2 s to 5.9 s; memory up to 35% higher; single-threaded mode 0-2% slower than the old serial front end",
+  "workload": "Real-world crates; Samply profile of a release build of the final crate in Cargo",
+  "metric": "build time",
+  "hardware": "28-core machine for the profiled example",
+  "os": "",
+  "toolchain": "nightly rustc with RUSTFLAGS=\"-Z threads=8\"",
+  "benchmark_date": "2023-11",
+  "benchmark_url": "https://blog.rust-lang.org/2023/11/09/parallel-rustc/",
+  "repo_url": null,
+  "docs_url": "https://blog.rust-lang.org/2023/11/09/parallel-rustc/",
+  "license": null,
+  "usability": "platform",
+  "language": "Rust",
+  "platforms": "All hosts, nightly only",
+  "install": "RUSTFLAGS=\"-Z threads=8\" cargo +nightly build",
+  "maintenance_status": "active",
+  "stars": null,
+  "last_commit": "",
+  "one_liner": "Nightly option that runs rustc's parsing, type checking and borrow checking on several threads; up to 50% faster builds.",
+  "how_it_is_fast": "Cargo already compiles independent crates in parallel and LLVM already splits code generation into parallel units, but the front end used one thread per crate. The parallel front end uses Rayon to run front-end work on several threads, and the jobserver keeps the total thread count within the core count. It helps most late in a build, where few crates are left to compile in parallel.",
+  "use_it_when": [
+    "Nightly users with 8 or more cores and builds with long serial stretches",
+    "Dev builds, which the post says benefit more than release builds"
+  ],
+  "skip_it_when": [
+    "Stable toolchains",
+    "Memory-limited machines: memory can rise by up to 35%",
+    "Tiny programs, a few of which compile more slowly in multi-threaded mode"
+  ],
+  "caveats": [
+    "'Up to 50%' is a best case; the post says effects vary widely",
+    "The planned 2024 stabilization slipped; the 2026 project goal still lists remaining issues and a test suite before stabilization"
+  ],
+  "tradeoffs": [
+    "Higher peak memory",
+    "Known bugs, including deadlocks, in multi-threaded mode as of the announcement"
+  ],
+  "evidence": [
+    {
+      "url": "https://blog.rust-lang.org/2023/11/09/parallel-rustc/",
+      "quote": "show that compile times can be reduced by up to 50%, though the effects vary widely and depend on the characteristics of the code and its build configuration."
+    },
+    {
+      "url": "https://blog.rust-lang.org/2023/11/09/parallel-rustc/",
+      "quote": "RUSTFLAGS=\"-Z threads=8\" cargo build --release"
+    },
+    {
+      "url": "https://blog.rust-lang.org/2023/11/09/parallel-rustc/",
+      "quote": "We recommend eight threads because this is the configuration we have tested the most and it is known to give good results."
+    },
+    {
+      "url": "https://blog.rust-lang.org/2023/11/09/parallel-rustc/",
+      "quote": "Front-end execution takes 5.9 seconds (down from 10.2 seconds)."
+    },
+    {
+      "url": "https://blog.rust-lang.org/2023/11/09/parallel-rustc/",
+      "quote": "Memory usage can increase significantly in multi-threaded mode. We have seen increases of up to 35%."
+    },
+    {
+      "url": "https://blog.rust-lang.org/2023/11/09/parallel-rustc/",
+      "quote": "When the parallel front-end is run in single-threaded mode, compilation times are typically 0% to 2% slower than with the serial front-end."
+    },
+    {
+      "url": "https://goals.rust-lang.org/2026/parallel-front-end.html",
+      "quote": "After that, we will start the feature stabilization process to push parallel front end into the stable release channel."
+    }
+  ],
+  "checked": "2026-10-28"
+}

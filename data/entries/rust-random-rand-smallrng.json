@@ -1,0 +1,91 @@
+{
+  "id": "https://github.com/rust-random/rand#smallrng",
+  "name": "rand SmallRng (Xoshiro256++ on 64-bit)",
+  "domain": "crypto-and-hashing",
+  "category": "random-numbers",
+  "baseline": "rand's StdRng and ThreadRng / rand::rng() (ChaCha12)",
+  "verdict": "confirm",
+  "verdict_reason": "Rand's guide lists Xoshiro256++, SmallRng's algorithm on 64-bit targets, at 11 GB/s against 4.1 GB/s for ChaCha12 on a Ryzen 9 9950X3D, and an independent M1 Max run measured 1.13 ns vs 4.11 ns per u64. SmallRng is not the fastest small generator: wyrand crates such as fastrand are about 2x faster again.",
+  "evidence_tier": "B",
+  "tier_reason": "The rand book's figures are first-party and rough, but an independent criterion run on a stated CPU agrees.",
+  "claimed_speedup": "u64 output: 11 GB/s vs 4.1 GB/s for ChaCha12 (Ryzen 9 9950X3D, rand book); one u64: 1.13 ns vs 4.11 ns, fill 1 KiB: 7.05 GB/s vs 2.02 GB/s (Apple M1 Max)",
+  "workload": "u64 generation; second source also measures u32 draws and filling a 1 KiB buffer.",
+  "metric": "throughput",
+  "hardware": "AMD Ryzen 9 9950X3D (rand book); Apple M1 Max (rapidrand)",
+  "os": "",
+  "toolchain": "",
+  "benchmark_date": "",
+  "benchmark_url": "https://rust-random.github.io/book/guide-rngs.html",
+  "repo_url": "https://github.com/rust-random/rand",
+  "docs_url": "https://docs.rs/rand/latest/rand/rngs/struct.SmallRng.html",
+  "license": "MIT OR Apache-2.0",
+  "usability": "copyable",
+  "language": "Rust",
+  "platforms": "All targets; Xoshiro256++ on 64-bit, Xoshiro128++ on 32-bit",
+  "install": "cargo add rand (use rand::rngs::SmallRng)",
+  "maintenance_status": "active",
+  "stars": 2090,
+  "last_commit": "2026-09-20",
+  "one_liner": "rand's non-cryptographic SmallRng: about 2.7x to 3.6x faster than the ChaCha12 generator behind StdRng and rand::rng().",
+  "how_it_is_fast": "Xoshiro256++ updates 32 bytes of state with a few shifts, rotates and XORs and adds two words for output, so each u64 costs a handful of instructions. ChaCha12 runs 12 rounds of a cipher block function and buffers the output.",
+  "use_it_when": [
+    "Simulations, games and randomized algorithms already written against rand's traits and distributions",
+    "Seeding many independent fast generators from one ThreadRng"
+  ],
+  "skip_it_when": [
+    "Anything security-relevant: use rand::rng() or StdRng",
+    "Reproducible streams across rand versions: SmallRng is documented as non-portable; use rand_xoshiro directly",
+    "Maximum speed outside the rand ecosystem: fastrand measured 0.51 ns vs 1.13 ns per u64"
+  ],
+  "caveats": [
+    "The rand book calls its numbers rough and limited to u64 output",
+    "The book gives no number for SmallRng itself, only for Xoshiro256++, which the docs name as its current 64-bit algorithm"
+  ],
+  "tradeoffs": [
+    "Not cryptographically secure",
+    "Algorithm may change between rand versions"
+  ],
+  "evidence": [
+    {
+      "url": "https://rust-random.github.io/book/guide-rngs.html",
+      "quote": "Xoshiro256++"
+    },
+    {
+      "url": "https://rust-random.github.io/book/guide-rngs.html",
+      "quote": "11 GB/s"
+    },
+    {
+      "url": "https://rust-random.github.io/book/guide-rngs.html",
+      "quote": "ChaCha12"
+    },
+    {
+      "url": "https://rust-random.github.io/book/guide-rngs.html",
+      "quote": "4.1 GB/s"
+    },
+    {
+      "url": "https://rust-random.github.io/book/guide-rngs.html",
+      "quote": "Here, performance is measured roughly for u64 outputs on an AMD Ryzen 9 9950X3D"
+    },
+    {
+      "url": "https://docs.rs/rand/latest/rand/rngs/struct.SmallRng.html",
+      "quote": "Xoshiro256PlusPlus on 64-bit platforms and Xoshiro128PlusPlus on 32-bit"
+    },
+    {
+      "url": "https://docs.rs/rand/latest/rand/rngs/struct.StdRng.html",
+      "quote": "The current algorithm used is the ChaCha block cipher with 12 rounds."
+    },
+    {
+      "url": "https://github.com/hoxxep/rapidrand/blob/main/README.md",
+      "quote": "| [rand](https://crates.io/crates/rand) `SmallRng`                           |  1.13 ns | 1.20 ns |    7.05 GB/s |"
+    },
+    {
+      "url": "https://github.com/hoxxep/rapidrand/blob/main/README.md",
+      "quote": "| [rand](https://crates.io/crates/rand) `StdRng` (ChaCha12)                  |  4.11 ns | 2.26 ns |    2.02 GB/s |"
+    },
+    {
+      "url": "https://github.com/hoxxep/rapidrand/blob/main/README.md",
+      "quote": "| [fastrand](https://crates.io/crates/fastrand) `Rng`                        |  0.51 ns | 0.52 ns |   21.49 GB/s |"
+    }
+  ],
+  "checked": "2026-10-28"
+}

@@ -1,0 +1,81 @@
+{
+  "id": "https://github.com/medialab/simd-csv",
+  "name": "simd-csv (SIMD CSV reader)",
+  "domain": "data-formats",
+  "category": "parsers-and-csv",
+  "baseline": "the csv crate's Reader (csv 1.x)",
+  "verdict": "confirm",
+  "verdict_reason": "The author's table, measured including I/O from SSD on AVX2 hardware, reports up to ~6.0x with the low-level Splitter, ~1.1x-~4.7x with ZeroCopyReader and ~0.9x-~4.0x with the copying Reader. The README is upfront that gains depend on cell length and that dense or always-quoted data gets little or nothing; no independent run exists.",
+  "evidence_tier": "C",
+  "tier_reason": "First-party, approximate ratios; CPU model, toolchain and crate versions are not stated and several datasets are private.",
+  "claimed_speedup": "vs csv: articles.csv ~4.8x split / ~4.7x zero_copy / ~4.0x copy; tweets.csv ~6.0x / ~2.9x / ~2.5x; quote-always.csv ~1.1x / ~1.2x / ~1.0x; worst-case.csv ~1.0x / ~1.1x / ~0.9x",
+  "workload": "Streaming CSV files of 100MB to 11GB from SSD, including I/O: long text columns (articles, mediapart), many sparse columns (tweets), numbers, and a worst case of single-character cells.",
+  "metric": "throughput",
+  "hardware": "x86_64 with AVX2 (model not stated)",
+  "os": "",
+  "toolchain": "",
+  "benchmark_date": "2025-11",
+  "benchmark_url": "https://github.com/medialab/simd-csv/blob/37d1b3983af7aacf8c2e0314ecc1a7b06104b5cc/README.md",
+  "repo_url": "https://github.com/medialab/simd-csv",
+  "docs_url": "https://docs.rs/simd-csv",
+  "license": "MIT",
+  "usability": "copyable",
+  "language": "Rust",
+  "platforms": "x86_64 SSE2 with AVX2 detected at runtime, aarch64 NEON, wasm simd128; SWAR or scalar fallback elsewhere",
+  "install": "cargo add simd-csv",
+  "maintenance_status": "active",
+  "stars": 21,
+  "last_commit": "2026-09-16",
+  "one_liner": "CSV reader that pairs a state machine with SIMD byte searching; its author measures up to 4x-6x over the csv crate on long-cell data.",
+  "how_it_is_fast": "Keeps a conventional CSV state machine but finds the next delimiter, quote or newline by comparing 16 or 32 bytes at once and reading the match mask, so it branches per structural character instead of per byte. Unquoted data uses an amortized memchr-style search; quoted fields use memchr's unrolled routines.",
+  "use_it_when": [
+    "Large CSV/TSV files with long or text-heavy cells",
+    "Pipelines that can use the Splitter or ZeroCopyReader instead of owned records",
+    "Data quoted only when needed"
+  ],
+  "skip_it_when": [
+    "Files written with QUOTE_ALWAYS or with very short cells, where the table shows ~0.9x-~1.2x",
+    "You need the csv crate's serde integration and flexibility; the README says simd-csv is less flexible"
+  ],
+  "caveats": [
+    "Approximate (~) ratios with no absolute times, CPU model or versions",
+    "Includes I/O, which dilutes parser differences",
+    "Author-run on datasets that are mostly not public; no third-party confirmation",
+    "Small project (21 stars)"
+  ],
+  "tradeoffs": [
+    "Less flexible and less user-friendly than csv, per the README",
+    "Has no concept of beginning of field, so a quote opened mid-field can corrupt output where traditional parsers cope, per the README"
+  ],
+  "evidence": [
+    {
+      "url": "https://github.com/medialab/simd-csv/blob/37d1b3983af7aacf8c2e0314ecc1a7b06104b5cc/README.md",
+      "quote": "| articles.csv       | ~4.8x | ~4.7x     | ~4.0x |"
+    },
+    {
+      "url": "https://github.com/medialab/simd-csv/blob/37d1b3983af7aacf8c2e0314ecc1a7b06104b5cc/README.md",
+      "quote": "| tweets.csv         | ~6.0x | ~2.9x     | ~2.5x |"
+    },
+    {
+      "url": "https://github.com/medialab/simd-csv/blob/37d1b3983af7aacf8c2e0314ecc1a7b06104b5cc/README.md",
+      "quote": "| quote-always.csv   | ~1.1x | ~1.2x     | ~1.0x |"
+    },
+    {
+      "url": "https://github.com/medialab/simd-csv/blob/37d1b3983af7aacf8c2e0314ecc1a7b06104b5cc/README.md",
+      "quote": "| worst-case.csv     | ~1.0x | ~1.1x     | ~0.9x |"
+    },
+    {
+      "url": "https://github.com/medialab/simd-csv/blob/37d1b3983af7aacf8c2e0314ecc1a7b06104b5cc/README.md",
+      "quote": "Comparison is done including IO, on `x86_64` with `avx2` support."
+    },
+    {
+      "url": "https://github.com/medialab/simd-csv/blob/37d1b3983af7aacf8c2e0314ecc1a7b06104b5cc/README.md",
+      "quote": "Sometimes you will go up to ~8 times faster, sometimes you will only go as fast as scalar code."
+    },
+    {
+      "url": "https://github.com/medialab/simd-csv/blob/37d1b3983af7aacf8c2e0314ecc1a7b06104b5cc/README.md",
+      "quote": "Is is less flexible and user-friendly than the [`csv`](https://docs.rs/csv/) crate,"
+    }
+  ],
+  "checked": "2026-10-28"
+}

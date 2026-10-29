@@ -1,0 +1,88 @@
+{
+  "id": "https://github.com/xacrimon/dashmap",
+  "name": "DashMap (sharded RwLock hash map)",
+  "domain": "collections",
+  "category": "concurrent-maps",
+  "baseline": "RwLock<HashMap> (parking_lot RwLock around std HashMap in the measurements)",
+  "verdict": "confirm",
+  "verdict_reason": "Under contention DashMap beats a single-lock map by large factors: 7.5x on a read-heavy mix at 16 threads and about 20x on an insert/remove-heavy mix at 8 threads. On one thread it is slower than RwLock<HashMap> (0.72x and 0.49x on two CPUs).",
+  "evidence_tier": "A",
+  "tier_reason": "Independent results (leapfrog's fork of conc-map-bench) with public code, CPU and OS, and LTO/codegen-units flags stated.",
+  "claimed_speedup": "Read-heavy, FxHash, Ryzen 9 3950X: 87.5 vs 11.7 Mops/s at 16 threads (about 7.5x, derived from page data) but 14.1 vs 19.4 at 1 thread; Apple M2 Max: 42.2 vs 3.4 at 12 threads (about 12x, derived from page data), 10.4 vs 21.2 at 1 thread. Exchange mix with SipHash at 8 threads: 26233769.293655325 vs 1331625.593635424 ops/s (about 20x, derived from page data).",
+  "workload": "bustle harness (port of the libcuckoo benchmark) with u64 keys: read-heavy (98% reads, 1% insert, 1% remove) and exchange (10% read, 40% insert, 40% remove, 10% update).",
+  "metric": "throughput (operations per second)",
+  "hardware": "AMD Ryzen 9 3950X (16 cores); Apple M2 Max (12 cores)",
+  "os": "Ubuntu 20.04 (3950X)",
+  "toolchain": "nightly Rust (2022), lto = true, codegen-units = 1; dashmap 5.0",
+  "benchmark_date": "2022-03",
+  "benchmark_url": "https://github.com/robclu/leapfrog/blob/main/README.md",
+  "repo_url": "https://github.com/xacrimon/dashmap",
+  "docs_url": "https://docs.rs/dashmap",
+  "license": "MIT",
+  "usability": "copyable",
+  "language": "Rust",
+  "platforms": "All targets with std",
+  "install": "cargo add dashmap",
+  "maintenance_status": "active",
+  "stars": 4125,
+  "last_commit": "2026-10-21",
+  "one_liner": "Sharded concurrent HashMap with a HashMap-like &self API; scales far past RwLock<HashMap> under contention but is slower single-threaded.",
+  "how_it_is_fast": "DashMap splits the table into many shards, each a hashbrown table behind its own RwLock, chosen by key hash. Threads touching different shards do not contend, so lock cache-line traffic is spread out instead of concentrated on one lock.",
+  "use_it_when": [
+    "Many threads read and write a shared map and a single RwLock<HashMap> shows contention.",
+    "Write-heavy or mixed workloads, where its sharded locks held up far better than flurry and evmap in the same runs."
+  ],
+  "skip_it_when": [
+    "Access is mostly single-threaded: RwLock<HashMap> was faster on one thread.",
+    "You hold a Ref or RefMut across other map calls or .await points: a second lock on the same shard deadlocks."
+  ],
+  "caveats": [
+    "Measured with dashmap 5.0 in 2022; current releases are 6.x.",
+    "The baseline used parking_lot's RwLock, not std's; std's RwLock moved to futexes on Linux in Rust 1.62 (2022), after this run.",
+    "The read-heavy table used FxHash for every map; the exchange numbers use SipHash.",
+    "dashmap's own README points to conc-map-bench, which is run by dashmap's author and whose 2024 results omit an RwLock<HashMap> baseline."
+  ],
+  "tradeoffs": [
+    "Readers still take shard locks, so a slow writer blocks readers of that shard.",
+    "Iteration locks shards one at a time and is not a consistent snapshot."
+  ],
+  "evidence": [
+    {
+      "url": "https://github.com/robclu/leapfrog/blob/main/README.md",
+      "quote": "| RwLock + HashMap | 19.4           | 1.0          | 11.7            | 0.60          |"
+    },
+    {
+      "url": "https://github.com/robclu/leapfrog/blob/main/README.md",
+      "quote": "| DashMap          | 14.1           | 0.72         | 87.5            | 4.51          |"
+    },
+    {
+      "url": "https://github.com/robclu/leapfrog/blob/main/README.md",
+      "quote": "| RwLock + HashMap | 21.2           | 1.0          | 3.4             | 0.16          |"
+    },
+    {
+      "url": "https://github.com/robclu/leapfrog/blob/main/README.md",
+      "quote": "| DashMap          | 10.4           | 0.49         | 42.2            | 2.00          |"
+    },
+    {
+      "url": "https://github.com/robclu/conc-map-bench/blob/master/results/Exchange.std.csv",
+      "quote": "RwLock<StdHashMap>,8388608,8,6299524461,1331625.593635424,6007"
+    },
+    {
+      "url": "https://github.com/robclu/conc-map-bench/blob/master/results/Exchange.std.csv",
+      "quote": "DashMap,8388608,8,319763733,26233769.293655325,304"
+    },
+    {
+      "url": "https://github.com/robclu/conc-map-bench/blob/master/README.md",
+      "quote": "CPU: AMD Threadripper 3950x"
+    },
+    {
+      "url": "https://github.com/robclu/leapfrog/blob/main/README.md",
+      "quote": "| Map              | Throughput (1) | Relative (1) | Throughput (12) | Relative (12) |"
+    },
+    {
+      "url": "https://github.com/robclu/leapfrog/blob/main/README.md",
+      "quote": "A snapshot of the results for the LeapMap on a read heavy workload using a 16 core AMD 3950x CPU"
+    }
+  ],
+  "checked": "2026-10-28"
+}

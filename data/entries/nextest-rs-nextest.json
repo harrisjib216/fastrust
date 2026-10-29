@@ -1,0 +1,81 @@
+{
+  "id": "https://github.com/nextest-rs/nextest",
+  "name": "cargo-nextest (test runner)",
+  "domain": "tooling",
+  "category": "test-runners-and-caching",
+  "baseline": "cargo test (libtest), which runs test binaries one after another",
+  "verdict": "confirm",
+  "verdict_reason": "On nine real projects pinned to specific commits, nextest ran the same tests 1.37x to 3.38x faster than cargo test, with commands and hardware published. The gain comes from running tests from different binaries in parallel, so it shrinks for projects with a single test binary.",
+  "evidence_tier": "A",
+  "tier_reason": "Projects, revisions, commands, hardware and Rust version are all published, so the runs can be repeated; the numbers are first-party.",
+  "claimed_speedup": "1.37x to 3.38x faster test runs: crucible 5.14 s vs 1.52 s (3.38x), tokio 24.27 s vs 11.60 s (2.09x), omicron 444.08 s vs 202.50 s (2.19x), penumbra 125.38 s vs 90.96 s (1.37x)",
+  "workload": "Test execution only (build excluded) for 9 workspaces with 113 to 1138 tests each; minimum of runs 3-5; doctests excluded",
+  "metric": "time",
+  "hardware": "AMD Ryzen 9 7950X, 16 cores/32 threads, 64 GB RAM",
+  "os": "Pop!_OS 22.04, Linux kernel 6.0.12",
+  "toolchain": "Rust 1.66.0",
+  "benchmark_date": "",
+  "benchmark_url": "https://nexte.st/docs/benchmarks/",
+  "repo_url": "https://github.com/nextest-rs/nextest",
+  "docs_url": "https://nexte.st/",
+  "license": "Apache-2.0 OR MIT",
+  "usability": "copyable",
+  "language": "Rust",
+  "platforms": "Linux, macOS and Windows",
+  "install": "cargo install --locked cargo-nextest (or a pre-built binary)",
+  "maintenance_status": "active",
+  "stars": 3372,
+  "last_commit": "2026-10-28",
+  "one_liner": "Test runner that runs every test in its own process from one global pool; 1.4x-3.4x faster than cargo test on nine real projects.",
+  "how_it_is_fast": "cargo test runs each test binary in turn, so a slow binary holds up all the others. nextest lists the tests in every binary first, then runs each test as its own process from a single shared pool, so slow tests in different binaries overlap.",
+  "use_it_when": [
+    "Workspaces with many crates and test binaries",
+    "Suites where a few long-running tests sit in different binaries",
+    "CI pipelines where test time is a large share of the total"
+  ],
+  "skip_it_when": [
+    "Doctests: nextest does not run them, so keep cargo test --doc",
+    "Tests that depend on sharing in-process state with other tests in the same binary",
+    "Small single-binary projects, where the project itself says runs may not get faster"
+  ],
+  "caveats": [
+    "First-party benchmark",
+    "Measured with Rust 1.66.0, released December 2022",
+    "Excludes build time, which often dominates CI runs"
+  ],
+  "tradeoffs": [
+    "One process per test adds per-test startup cost",
+    "Separate install; doctests need a second command"
+  ],
+  "evidence": [
+    {
+      "url": "https://github.com/nextest-rs/nextest/blob/main/site/src/docs/benchmarks/index.md",
+      "quote": "| [crucible]    | [`cb228c2b`][crucible-rev]    |        483 |           5.14 |        1.52 |       3.38× |"
+    },
+    {
+      "url": "https://github.com/nextest-rs/nextest/blob/main/site/src/docs/benchmarks/index.md",
+      "quote": "| [tokio]       | [`1f50c571`][tokio-rev]       |       1138 |          24.27 |       11.60 |       2.09× |"
+    },
+    {
+      "url": "https://github.com/nextest-rs/nextest/blob/main/site/src/docs/benchmarks/index.md",
+      "quote": "| [omicron]     | [`e7949cd1`][omicron-rev]     |        619 |         444.08 |      202.50 |       2.19× |"
+    },
+    {
+      "url": "https://github.com/nextest-rs/nextest/blob/main/site/src/docs/benchmarks/index.md",
+      "quote": "| [penumbra]    | [`4ecd94cc`][penumbra-rev]    |        144 |         125.38 |       90.96 |       1.37× |"
+    },
+    {
+      "url": "https://github.com/nextest-rs/nextest/blob/main/site/src/docs/benchmarks/index.md",
+      "quote": "AMD Ryzen 9 7950X x86_64, 16 cores/32 threads"
+    },
+    {
+      "url": "https://github.com/nextest-rs/nextest/blob/main/site/src/docs/benchmarks/index.md",
+      "quote": "The measurements do not include time taken to build the tests. To ensure that, each command was run 5 times in succession. The measurement recorded is the minimum of runs 3, 4 and 5."
+    },
+    {
+      "url": "https://github.com/nextest-rs/nextest/blob/main/site/src/docs/benchmarks/index.md",
+      "quote": "Even if nextest doesn't result in faster test runs, you may find it useful for identifying test bottlenecks, for its user interface, or for its other features."
+    }
+  ],
+  "checked": "2026-10-28"
+}

@@ -1,0 +1,105 @@
+# faer (dense linear algebra)
+
+<sub>[fastrust](../../../README.md) › [Catalog](../../README.md) › [Numerics and media](../README.md) › [Linear algebra](README.md)</sub>
+
+**Tier C** (first-party numbers) · 🟡 Holds up in part · Open source · `Rust` · `MIT` · 🟢 active
+
+> Pure-Rust dense linear algebra; 5-13x faster than nalgebra on large decompositions, about even on matmul and slower on tiny matrices.
+
+| | |
+|---|---|
+| **Beats** | nalgebra (pure Rust, matrixmultiply backend) and ndarray with OpenBLAS, f64 column-major matrices |
+| **Claimed result** | n = 1024, f64, times for faer / faer(par) / ndarray / nalgebra: matmul 33.9ms / 6.6ms / 9.7ms / 39.1ms; Cholesky 7.8ms / 3.4ms / 14.5ms / 41.2ms; SVD 297.8ms / 152ms / 253.8ms / 3.95s; self-adjoint EVD 132.1ms / 68.4ms / 909ms / 764.1ms (faer vs nalgebra 1.15x, 5.28x, 13.3x, 5.78x; parallel faer vs ndarray+OpenBLAS 1.47x, 4.26x, 1.67x, 13.3x) (derived from page data). n = 4 SVD: faer 2µs vs nalgebra 1.3µs |
+| **Workload** | Square f64 column-major matrices from n = 4 to 1024: matrix multiply, Cholesky, LU, QR, inverse, SVD and eigendecompositions; faer single-threaded and with 12 threads. |
+| **Metric** | time |
+| **Hardware** | 11th Gen Intel Core i5-11400 @ 2.60GHz, 12 threads |
+| **Toolchain** | Eigen compiled with -march=native -O3 -fopenmp; rustc version and Rust flags not stated |
+| **Measured** | 2024-04 |
+| **Adoption** | 2.6k stars |
+| **Last commit** | 2026-10-22 |
+| **Platforms** | Pure Rust; SIMD kernels chosen at runtime through pulp's feature detection |
+| **Install** | cargo add faer |
+| **Links** | [repository](https://github.com/sarah-quinones/faer-rs) · [documentation](https://docs.rs/faer) · [benchmark](https://faer.veganb.tw/benchmarks/) |
+
+## Verdict
+
+faer is far faster than nalgebra on decompositions at n >= 64 (5.3x Cholesky, 13x SVD, 5.8x self-adjoint EVD at n = 1024), but single-threaded matrix multiply is only 1.15x faster, nalgebra wins on tiny matrices (n = 4), and OpenBLAS-backed ndarray beats single-threaded faer on SVD. The text tables are from April 2024; newer results are published only as charts.
+
+**Why tier C:** First-party tables with the CPU named but no rustc version or flags for the Rust libraries; the 2025 benchmark pages are chart-only.
+
+## Use it when
+
+- You factor or decompose matrices of n >= 64 (Cholesky, LU, QR, SVD, EVD) in pure Rust.
+- You want parallel dense linear algebra without linking a BLAS/LAPACK.
+
+## Skip it when
+
+- Your matrices are small and fixed-size (2x2 to 4x4); nalgebra's static types are as fast or faster there.
+- You only need matrix multiply; single-threaded faer is within 15% of nalgebra.
+- You already link a tuned LAPACK through ndarray-linalg for SVD-heavy work.
+
+## How it is fast
+
+faer uses blocked, cache-aware decompositions that spend most of their time in matrix multiply, built on the gemm and nano-gemm kernels with runtime SIMD dispatch through pulp. nalgebra's decompositions are textbook unblocked loops, which is why the gap grows with n.
+
+## What it costs
+
+- Larger dependency tree and longer compile times than nalgebra (gemm, pulp, generic code over many scalar types).
+- Frequent breaking API changes between 0.x releases.
+
+## Problems with the evidence
+
+- The text tables come from the README as of April 2024 (faer 0.18 era); faer is now 0.24, and the current benchmark pages (2025-09-22, Ryzen 7 8745HS and Xeon Gold 6146) show results only as log-scale charts, so the current gap cannot be quoted.
+- ndarray was measured through OpenBLAS, which is multi-threaded by default, while plain faer columns are single-threaded; compare faer(par) with ndarray.
+- Benchmarks are first-party and give no Rust compiler version or RUSTFLAGS.
+
+## Evidence
+
+<details>
+<summary>11 quotes from the sources, checked 2026-10-28</summary>
+
+> The benchmarks were run on an `11th Gen Intel(R) Core(TM) i5-11400 @ 2.60GHz` with 12 threads.
+>
+> — [github.com/sarah-quinones/faer-rs/blob/926fc386b39156e82ce5ba93bb95…](https://github.com/sarah-quinones/faer-rs/blob/926fc386b39156e82ce5ba93bb9568906a985e91/README.md)
+
+> `nalgebra` is used with the `matrixmultiply` backend
+>
+> — [github.com/sarah-quinones/faer-rs/blob/926fc386b39156e82ce5ba93bb95…](https://github.com/sarah-quinones/faer-rs/blob/926fc386b39156e82ce5ba93bb9568906a985e91/README.md)
+
+> `ndarray` is used with the `openblas` backend
+>
+> — [github.com/sarah-quinones/faer-rs/blob/926fc386b39156e82ce5ba93bb95…](https://github.com/sarah-quinones/faer-rs/blob/926fc386b39156e82ce5ba93bb9568906a985e91/README.md)
+
+> n faer faer(par) ndarray nalgebra eigen
+>
+> — [github.com/sarah-quinones/faer-rs/blob/926fc386b39156e82ce5ba93bb95…](https://github.com/sarah-quinones/faer-rs/blob/926fc386b39156e82ce5ba93bb9568906a985e91/README.md)
+
+> 1024 33.9ms 6.6ms 9.7ms 39.1ms 8.3ms
+>
+> — [github.com/sarah-quinones/faer-rs/blob/926fc386b39156e82ce5ba93bb95…](https://github.com/sarah-quinones/faer-rs/blob/926fc386b39156e82ce5ba93bb9568906a985e91/README.md)
+
+> 1024 7.8ms 3.4ms 14.5ms 41.2ms 8.4ms
+>
+> — [github.com/sarah-quinones/faer-rs/blob/926fc386b39156e82ce5ba93bb95…](https://github.com/sarah-quinones/faer-rs/blob/926fc386b39156e82ce5ba93bb9568906a985e91/README.md)
+
+> 1024 297.8ms 152ms 253.8ms 3.95s 433.6ms
+>
+> — [github.com/sarah-quinones/faer-rs/blob/926fc386b39156e82ce5ba93bb95…](https://github.com/sarah-quinones/faer-rs/blob/926fc386b39156e82ce5ba93bb9568906a985e91/README.md)
+
+> 1024 132.1ms 68.4ms 909ms 764.1ms 392ms
+>
+> — [github.com/sarah-quinones/faer-rs/blob/926fc386b39156e82ce5ba93bb95…](https://github.com/sarah-quinones/faer-rs/blob/926fc386b39156e82ce5ba93bb9568906a985e91/README.md)
+
+> 4 2µs 1.9µs 3µs 1.3µs 1.8µs
+>
+> — [github.com/sarah-quinones/faer-rs/blob/926fc386b39156e82ce5ba93bb95…](https://github.com/sarah-quinones/faer-rs/blob/926fc386b39156e82ce5ba93bb9568906a985e91/README.md)
+
+> date: 2025-09-22
+>
+> — [faer.veganb.tw/benchmarks/minipc/](https://faer.veganb.tw/benchmarks/minipc/)
+
+> logarithmic in both axes
+>
+> — [faer.veganb.tw/benchmarks/minipc/](https://faer.veganb.tw/benchmarks/minipc/)
+
+</details>

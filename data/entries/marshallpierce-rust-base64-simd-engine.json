@@ -1,0 +1,82 @@
+{
+  "id": "https://github.com/marshallpierce/rust-base64#simd-engine",
+  "name": "base64 0.23 (Simd engine)",
+  "domain": "data-formats",
+  "category": "base64-and-encoding",
+  "baseline": "base64's scalar GeneralPurpose engine (general_purpose::STANDARD, the only engine through 0.22 and still the prelude default in 0.23)",
+  "verdict": "confirm",
+  "verdict_reason": "The default base64 crate gained SIMD engines in 0.23.0 (2026-07-23). Its PR measured 3.7x-3.8x faster encoding and 6.5x-7.1x faster decoding than the scalar engine on AVX2, with instruction counts down 4.7x-7.1x. The speedup is opt-in: STANDARD and the prelude constants are still scalar, so callers must construct engine::Simd.",
+  "evidence_tier": "C",
+  "tier_reason": "First-party PR numbers from public criterion and Callgrind benchmarks; the machine is only described as AVX2, x86-64-v3.",
+  "claimed_speedup": "encode_slice 3 KiB: 1.73 us -> 468 ns (3.7x); 3 MiB: 1.74 ms -> 456 us (3.8x). decode_slice 3 KiB: 1.49 us -> 230 ns (6.5x); 3 MiB: 1.54 ms -> 216 us (7.1x). Instructions 22,245 -> 4,741 (4.7x) up to 28,705,264 -> 4,063,989 (7.1x).",
+  "workload": "encode_slice and decode_slice into existing buffers, 3 KiB and 3 MiB inputs, STANDARD alphabet.",
+  "metric": "time",
+  "hardware": "x86-64-v3 machine with AVX2 (model not stated)",
+  "os": "",
+  "toolchain": "",
+  "benchmark_date": "2026-07-19",
+  "benchmark_url": "https://github.com/marshallpierce/rust-base64/pull/299",
+  "repo_url": "https://github.com/marshallpierce/rust-base64",
+  "docs_url": "https://docs.rs/base64",
+  "license": "MIT OR Apache-2.0",
+  "usability": "copyable",
+  "language": "Rust",
+  "platforms": "x86_64 AVX2 and aarch64 NEON; runtime detection (Simd) needs std; Avx2/Neon engines work in no_std; scalar fallback elsewhere",
+  "install": "cargo add base64 (0.23 or later), then use base64::engine::Simd",
+  "maintenance_status": "active",
+  "stars": 740,
+  "last_commit": "2026-08-18",
+  "one_liner": "The base64 crate's own SIMD engine (0.23+): 3.7x faster encode and up to 7.1x faster decode than its scalar engine, if you opt in.",
+  "how_it_is_fast": "Implements Wojciech Muła's vectorized base64 algorithms: AVX2 uses a multiply-based bit interleave, NEON a shift/mask variant, both with shared lookup tables. The Simd engine detects AVX2 or NEON at runtime and falls back to the scalar kernels for tails and unsupported CPUs.",
+  "use_it_when": [
+    "You already depend on base64 and encode or decode more than a few hundred bytes at a time",
+    "x86_64 with AVX2 or any aarch64 target",
+    "You want SIMD speed without adding base64-simd as another dependency"
+  ],
+  "skip_it_when": [
+    "Custom alphabets: only STANDARD and URL_SAFE are accelerated",
+    "Crates that must stay #![forbid(unsafe_code)]: disable the default simd-unsafe feature",
+    "Secret material: the crate documents its GeneralPurpose engine as not constant-time and offers no constant-time SIMD engine"
+  ],
+  "caveats": [
+    "First-party numbers on an unnamed machine; no third-party run yet",
+    "Only 3 KiB and 3 MiB inputs were measured; short inputs may gain less",
+    "Wall-clock and instruction counts are from the PR description, not a published report"
+  ],
+  "tradeoffs": [
+    "The simd-unsafe feature (on by default) is the crate's only use of unsafe",
+    "MSRV rose to 1.71 in 0.23.0",
+    "Opt-in API: existing code using STANDARD sees no change"
+  ],
+  "evidence": [
+    {
+      "url": "https://api.github.com/repos/marshallpierce/rust-base64/pulls/299",
+      "quote": "| encode_slice | 3 KiB | 22,245 -> 4,741        (4.7x)  | 1.73 us -> 468 ns   (3.7x)  |"
+    },
+    {
+      "url": "https://api.github.com/repos/marshallpierce/rust-base64/pulls/299",
+      "quote": "| encode_slice | 3 MiB | 22,282,621 -> 3,802,013 (5.9x) | 1.74 ms -> 456 us   (3.8x)  |"
+    },
+    {
+      "url": "https://api.github.com/repos/marshallpierce/rust-base64/pulls/299",
+      "quote": "| decode_slice | 3 KiB | 28,620 -> 4,817        (5.9x)  | 1.49 us -> 230 ns   (6.5x)  |"
+    },
+    {
+      "url": "https://api.github.com/repos/marshallpierce/rust-base64/pulls/299",
+      "quote": "| decode_slice | 3 MiB | 28,705,264 -> 4,063,989 (7.1x) | 1.54 ms -> 216 us   (7.1x)  |"
+    },
+    {
+      "url": "https://api.github.com/repos/marshallpierce/rust-base64/pulls/299",
+      "quote": "times with the criterion benchmarks (AVX2, x86-64-v3, this machine):"
+    },
+    {
+      "url": "https://github.com/marshallpierce/rust-base64/blob/master/RELEASE-NOTES.md",
+      "quote": "Added SIMD-accelerated engines behind the default-on `simd-unsafe` feature"
+    },
+    {
+      "url": "https://github.com/marshallpierce/rust-base64/blob/master/src/prelude.rs",
+      "quote": "pub use crate::engine::general_purpose::STANDARD as BASE64_STANDARD;"
+    }
+  ],
+  "checked": "2026-10-28"
+}

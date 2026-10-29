@@ -1,0 +1,116 @@
+{
+  "id": "https://github.com/rust-postgres/rust-postgres",
+  "name": "tokio-postgres (async PostgreSQL driver)",
+  "domain": "storage",
+  "category": "sql-drivers",
+  "baseline": "sqlx 0.8 PostgreSQL driver (query_as! macro and query + FromRow)",
+  "verdict": "downgrade",
+  "verdict_reason": "tokio-postgres loads large result sets 1.5x faster than sqlx's macro path and 1.9x faster than its FromRow path at 10,000 rows. On one-row queries in the same suite it was 1.56x slower than sqlx, so the win depends on result size.",
+  "evidence_tier": "A",
+  "tier_reason": "Public suite run nightly in CI by the Diesel project, independent of both drivers, with toolchain and RUSTFLAGS stated.",
+  "claimed_speedup": "Trivial select, median: 10000 rows 2,190.77 us vs 3,347.92 us (query_as!) and 4,133.86 us (FromRow), 1.53x and 1.89x; 1 row 53.45 us vs 34.32 us (sqlx faster). User report fetching 12096001 rows: 9386ms vs 29830ms for sqlx query_as (ratios derived from page data).",
+  "workload": "Diesel benchmark 'trivial query' against a local PostgreSQL 18: SELECT returning 1 to 10,000 user rows into structs; a separate user report fetched 12 million 6-column rows.",
+  "metric": "latency",
+  "hardware": "GitHub Actions ubuntu-latest runner (shared VM, CPU not recorded)",
+  "os": "Ubuntu (GitHub Actions ubuntu-latest image), PostgreSQL 18 on localhost",
+  "toolchain": "rustc stable via rustup on the run date, RUSTFLAGS=-C target-cpu=native, cargo bench",
+  "benchmark_date": "2026-10-27",
+  "benchmark_url": "https://github.com/diesel-rs/metrics/blob/4f1da2d29edd06e9507d864bb508ff21717589f6/plots/table_bench_trivial_query_postgres.html",
+  "repo_url": "https://github.com/rust-postgres/rust-postgres",
+  "docs_url": "https://docs.rs/tokio-postgres",
+  "license": "MIT OR Apache-2.0",
+  "usability": "copyable",
+  "language": "Rust",
+  "platforms": "Any tokio-supported target",
+  "install": "cargo add tokio-postgres",
+  "maintenance_status": "active",
+  "stars": 4026,
+  "last_commit": "2026-10-03",
+  "one_liner": "Async PostgreSQL driver; 1.5x to 1.9x faster than sqlx on 10,000-row results, slower on one-row queries in the same suite.",
+  "how_it_is_fast": "tokio-postgres decodes rows lazily from the binary protocol buffer and supports pipelining several queries on one connection. sqlx adds its own row and type-mapping layer, which costs more as the row count grows.",
+  "use_it_when": [
+    "Endpoints that return thousands of rows per query",
+    "You can pipeline independent queries, which sqlx does not support"
+  ],
+  "skip_it_when": [
+    "Mostly single-row lookups, where sqlx was faster in this suite",
+    "You want compile-time checked SQL (sqlx macros) or a query builder (Diesel)"
+  ],
+  "caveats": [
+    "Shared CI VM; numbers change run to run (this record uses the 2026-10-27 run)",
+    "Suite pins sqlx 0.8; sqlx 0.9 (May 2026) is not measured",
+    "The one-row result may reflect per-iteration runtime overhead in the harness: the synchronous postgres crate, which wraps tokio-postgres, took 30.22 us",
+    "The 12M-row report ran tokio-postgres first, so database caching may have favored the second library less than it seems"
+  ],
+  "tradeoffs": [
+    "No connection pool, migrations or compile-time query checks built in",
+    "Row-to-struct mapping is manual or needs a helper crate"
+  ],
+  "evidence": [
+    {
+      "url": "https://github.com/diesel-rs/metrics/blob/4f1da2d29edd06e9507d864bb508ff21717589f6/plots/table_bench_trivial_query_postgres.html",
+      "quote": "Trivial query (postgres)"
+    },
+    {
+      "url": "https://github.com/diesel-rs/metrics/blob/4f1da2d29edd06e9507d864bb508ff21717589f6/plots/table_bench_trivial_query_postgres.html",
+      "quote": "2026-10-27 04:43:23 (dde3b22cae58b9f0fd0e7f9e9a2b3dd62377baec)"
+    },
+    {
+      "url": "https://github.com/diesel-rs/metrics/blob/4f1da2d29edd06e9507d864bb508ff21717589f6/plots/table_bench_trivial_query_postgres.html",
+      "quote": "10000"
+    },
+    {
+      "url": "https://github.com/diesel-rs/metrics/blob/4f1da2d29edd06e9507d864bb508ff21717589f6/plots/table_bench_trivial_query_postgres.html",
+      "quote": "2,190.77"
+    },
+    {
+      "url": "https://github.com/diesel-rs/metrics/blob/4f1da2d29edd06e9507d864bb508ff21717589f6/plots/table_bench_trivial_query_postgres.html",
+      "quote": "3,347.92"
+    },
+    {
+      "url": "https://github.com/diesel-rs/metrics/blob/4f1da2d29edd06e9507d864bb508ff21717589f6/plots/table_bench_trivial_query_postgres.html",
+      "quote": "4,133.86"
+    },
+    {
+      "url": "https://github.com/diesel-rs/metrics/blob/4f1da2d29edd06e9507d864bb508ff21717589f6/plots/table_bench_trivial_query_postgres.html",
+      "quote": "53.45"
+    },
+    {
+      "url": "https://github.com/diesel-rs/metrics/blob/4f1da2d29edd06e9507d864bb508ff21717589f6/plots/table_bench_trivial_query_postgres.html",
+      "quote": "34.32"
+    },
+    {
+      "url": "https://github.com/diesel-rs/metrics/blob/4f1da2d29edd06e9507d864bb508ff21717589f6/plots/table_bench_trivial_query_postgres.html",
+      "quote": "30.22"
+    },
+    {
+      "url": "https://github.com/diesel-rs/diesel/blob/82bd9b322bcc7f4e3f9324785cda8e87351b0171/.github/workflows/metrics.yml",
+      "quote": "RUSTFLAGS: \"-C target-cpu=native\""
+    },
+    {
+      "url": "https://github.com/transact-rs/sqlx/issues/2007",
+      "quote": "about 12096001 rows x 6 columns"
+    },
+    {
+      "url": "https://github.com/transact-rs/sqlx/issues/2007",
+      "quote": "tokio_postgres_query_time: 9386ms"
+    },
+    {
+      "url": "https://github.com/transact-rs/sqlx/issues/2007",
+      "quote": "sqlx_query_time query_as: 29830ms"
+    },
+    {
+      "url": "https://github.com/transact-rs/sqlx/issues/2007",
+      "quote": "This is with tokio-postgres running the query first, sqlx second, so the db might cache something already for sqlx?"
+    },
+    {
+      "url": "https://diesel.rs/compare_diesel.html",
+      "quote": "Query Pipelining is supported by diesel-async and tokio-postgres"
+    },
+    {
+      "url": "https://diesel.rs/compare_diesel.html",
+      "quote": "Notably sqlx and sea-orm do not support this feature."
+    }
+  ],
+  "checked": "2026-10-28"
+}

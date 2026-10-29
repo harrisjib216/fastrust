@@ -1,0 +1,130 @@
+{
+  "id": "https://codeberg.org/zesterer/spin",
+  "name": "spin (spin::Mutex)",
+  "domain": "concurrency-and-runtime",
+  "category": "locks",
+  "baseline": "std::sync::Mutex on Linux (futex-based since 1.62; pthread-based in the 2020 run)",
+  "verdict": "downgrade",
+  "verdict_reason": "The idea that a spinlock beats a sleeping mutex for short critical sections holds only with light contention and spare cores: there spin::Mutex was 1.3x to 1.55x faster than the futex std Mutex. Under heavy or extreme contention it was 1.2x to 2.1x slower in three runs, and with more threads than cores it was 2.6x slower with a worst case seven times the mutex's. The crate's own README sends std users back to std::sync.",
+  "evidence_tier": "B",
+  "tier_reason": "Independent of the crate's authors: matklad's published lock-bench, a rust-lang libs rerun, and third-party reruns, all with the benchmark code public.",
+  "claimed_speedup": "Belief tested: 'For short critical sections, spinlocks perform better'. lock-bench vs the futex std Mutex (64C/128T Threadripper): extreme contention 42.427277ms vs 27.645506ms, heavy 2.129469ms vs 1.822707ms, light 604.818µs vs 784.189µs, none 765.141µs vs 1.189231ms. Extreme contention elsewhere: 161.125953ms vs 113.030539ms (INTEL 120 cores); 63.898884ms vs 30.795793ms. With 32 threads on 4 core/8 hyperthreads (pthread-era std), heavy contention: spin avg 55ms, max 161ms vs std avg 21ms, max 23ms.",
+  "workload": "matklad/lock-bench: 32 threads incrementing counters behind cache-padded locks, 10,000 operations per thread, 100 rounds; 2, 64, 1,000 or 1,000,000 locks for extreme, heavy, light and no contention. Runs from January 2020, March 2022, November 2023 and May 2025.",
+  "metric": "time",
+  "hardware": "4-core/8-thread desktop (2020); AMD Threadripper 64C/128T (2022); Intel 120-core CPU (2023); not stated (2025)",
+  "os": "Linux",
+  "toolchain": "cargo run --release (2020 run); not stated for later runs",
+  "benchmark_date": "2022-03-21",
+  "benchmark_url": "https://github.com/rust-lang/rust/pull/95035#issuecomment-1073966631",
+  "repo_url": "https://codeberg.org/zesterer/spin",
+  "docs_url": "https://docs.rs/spin",
+  "license": "MIT",
+  "usability": "copyable",
+  "language": "Rust",
+  "platforms": "Any target with atomics; no_std",
+  "install": "cargo add spin",
+  "maintenance_status": "active",
+  "stars": 593,
+  "last_commit": "2026-08-17",
+  "one_liner": "Spin-based Mutex, RwLock and Once for no_std; with std available it trails std's futex Mutex under contention and ties or wins only when idle.",
+  "how_it_is_fast": "Acquiring the lock is a compare-and-swap loop on one atomic flag with no syscall, so an uncontended or briefly held lock never touches the kernel. Waiting threads keep spinning on the CPU instead of sleeping. That avoids wake-up latency when every waiter has its own core, and wastes CPU when the lock holder has been preempted.",
+  "use_it_when": [
+    "no_std code (kernels, firmware) with no OS to sleep on",
+    "Threads pinned one per core with very short critical sections and light contention",
+    "Interrupt-free contexts where blocking is not allowed"
+  ],
+  "skip_it_when": [
+    "Any program that can use std: std::sync::Mutex already spins briefly before sleeping",
+    "More runnable threads than cores: a preempted holder leaves every waiter spinning",
+    "Heavily contended locks, where it was 1.2x to 2.6x slower in every run"
+  ],
+  "caveats": [
+    "The favorable numbers (light and no contention) come from one 64-core machine running 32 threads, so every thread had a core.",
+    "lock-bench's critical section is one increment; longer critical sections make spinning worse.",
+    "The GitHub repository (zesterer/spin-rs) is archived and development moved to Codeberg; the star count is from GitHub.",
+    "The spin crate itself makes no speed claim over std; the belief tested here is the common one matklad's post set out to check."
+  ],
+  "tradeoffs": [
+    "Burns CPU while waiting and has no fairness by default (ticket locks are available as an option).",
+    "Priority inversion risk on preemptive systems: a low-priority holder can be starved by spinning waiters."
+  ],
+  "evidence": [
+    {
+      "url": "https://matklad.github.io/2020/01/04/mutexes-are-faster-than-spinlocks.html",
+      "quote": "For short critical sections, spinlocks perform better"
+    },
+    {
+      "url": "https://matklad.github.io/2020/01/04/mutexes-are-faster-than-spinlocks.html",
+      "quote": "We use 32 threads (on 4 core/8 hyperthreads CPU)"
+    },
+    {
+      "url": "https://matklad.github.io/2020/01/04/mutexes-are-faster-than-spinlocks.html",
+      "quote": "std::sync::Mutex avg 21ms min 11ms max 23ms"
+    },
+    {
+      "url": "https://matklad.github.io/2020/01/04/mutexes-are-faster-than-spinlocks.html",
+      "quote": "spin::Mutex avg 55ms min 7ms max 161ms"
+    },
+    {
+      "url": "https://github.com/rust-lang/rust/pull/95035#issuecomment-1073966631",
+      "quote": "using a 64C/128T AMD Threadripper"
+    },
+    {
+      "url": "https://github.com/rust-lang/rust/pull/95035#issuecomment-1073966631",
+      "quote": "this new std::sync::Mutex avg 27.645506ms min 26.492286ms max 28.900528ms"
+    },
+    {
+      "url": "https://github.com/rust-lang/rust/pull/95035#issuecomment-1073966631",
+      "quote": "spin::Mutex avg 42.427277ms min 39.371153ms max 44.045329ms"
+    },
+    {
+      "url": "https://github.com/rust-lang/rust/pull/95035#issuecomment-1073966631",
+      "quote": "this new std::sync::Mutex avg 1.822707ms min 1.674482ms max 2.081187ms"
+    },
+    {
+      "url": "https://github.com/rust-lang/rust/pull/95035#issuecomment-1073966631",
+      "quote": "spin::Mutex avg 2.129469ms min 2.024791ms max 2.266706ms"
+    },
+    {
+      "url": "https://github.com/rust-lang/rust/pull/95035#issuecomment-1073966631",
+      "quote": "this new std::sync::Mutex avg 784.189µs min 663.889µs max 1.156756ms"
+    },
+    {
+      "url": "https://github.com/rust-lang/rust/pull/95035#issuecomment-1073966631",
+      "quote": "spin::Mutex avg 604.818µs min 501.494µs max 841.242µs"
+    },
+    {
+      "url": "https://github.com/rust-lang/rust/pull/95035#issuecomment-1073966631",
+      "quote": "this new std::sync::Mutex avg 1.189231ms min 807.39µs max 1.50386ms"
+    },
+    {
+      "url": "https://github.com/rust-lang/rust/pull/95035#issuecomment-1073966631",
+      "quote": "spin::Mutex avg 765.141µs min 565.754µs max 983.661µs"
+    },
+    {
+      "url": "https://github.com/Amanieu/parking_lot/issues/418",
+      "quote": "std::sync::Mutex avg 113.030539ms min 105.760154ms max 131.87258ms"
+    },
+    {
+      "url": "https://github.com/Amanieu/parking_lot/issues/418",
+      "quote": "spin::Mutex avg 161.125953ms min 151.708034ms max 177.132377ms"
+    },
+    {
+      "url": "https://github.com/Amanieu/parking_lot/issues/418",
+      "quote": "observed on INTEL 120 cores CPU"
+    },
+    {
+      "url": "https://github.com/Amanieu/parking_lot/pull/461",
+      "quote": "std::sync::Mutex avg 30.795793ms min 28.369313ms max 33.668656ms"
+    },
+    {
+      "url": "https://github.com/Amanieu/parking_lot/pull/461",
+      "quote": "spin::Mutex avg 63.898884ms min 58.45244ms max 74.323676ms"
+    },
+    {
+      "url": "https://github.com/zesterer/spin-rs/blob/master/README.md",
+      "quote": "If you have access to `std`, it's likely that the primitives in `std::sync` will serve you better except in very specific circumstances."
+    }
+  ],
+  "checked": "2026-10-28"
+}

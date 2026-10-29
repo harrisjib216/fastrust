@@ -1,0 +1,99 @@
+# json-rust (json crate, DOM parser)
+
+<sub>[fastrust](../../../README.md) › [Catalog](../../README.md) › [Data formats](../README.md) › [JSON](README.md)</sub>
+
+**Tier A** (reproducible public benchmark) · ❌ Doesn't hold up · Open source · `Rust` · `MIT OR Apache-2.0` · 🔴 abandoned
+
+> Untyped JSON DOM crate that beat serde_json's Value in a 2021 run but not serde_json struct parsing; unmaintained since 2020.
+
+| | |
+|---|---|
+| **Beats** | serde_json 1.0.72, both serde_json::Value (DOM) and typed struct parsing |
+| **Claimed result** | DOM parse 390 vs 320 MB/s (canada), 520 vs 420 MB/s (citm_catalog), 430 vs 300 MB/s (twitter) against serde_json's Value; DOM stringify 840 vs 430, 780 vs 560, 1030 vs 910 MB/s. serde_json struct parse in the same run: 580, 710 and 550 MB/s. |
+| **Workload** | nativejson-benchmark files canada.json, citm_catalog.json, twitter.json; DOM parse and stringify; best of two runs. |
+| **Metric** | throughput |
+| **Hardware** | Intel Core i7-6600U @ 2.60GHz (2015 laptop CPU) |
+| **Toolchain** | rustc 1.59.0-nightly (0b6f079e4 2021-12-07), cargo run --release |
+| **Measured** | 2021-12-08 |
+| **Adoption** | 596 stars |
+| **Last commit** | 2020-03-29 |
+| **Platforms** | portable |
+| **Install** | cargo add json |
+| **Links** | [repository](https://github.com/maciejhirsz/json-rust) · [documentation](https://docs.rs/json) · [benchmark](https://github.com/serde-rs/json-benchmark/blob/541d44987b0f68714638e66036c75813b6ff4bc4/README.md) |
+
+## Verdict
+
+The README says it can even outperform parsing to structs, but in the benchmark it links (2021 run) json-rust DOM parsing at 390-520 MB/s was slower than serde_json struct parsing at 550-710 MB/s on all three files. Its lead over serde_json's Value was real but is five years old, and the crate has had no release since 2020, carries an unmaintained advisory with an open soundness report, and was dropped from that benchmark in 2023.
+
+**Why tier A:** Public benchmark code (serde-rs/json-benchmark) with the CPU and rustc nightly stated; it is maintained by serde_json's author.
+
+## Use it when
+
+- Do not adopt it for new code; serde_json, simd-json or sonic-rs cover the same DOM use
+
+## Skip it when
+
+- Any new project: no release since 0.12.4 (2020-03-18) and RUSTSEC-2022-0081 flags it unmaintained
+- Typed parsing: it has no struct deserialization
+
+## How it is fast
+
+Parses only to its own dynamic JsonValue, with no serde layer, and stores numbers as a 64-bit mantissa plus 16-bit decimal exponent instead of converting to f64 during parsing.
+
+## What it costs
+
+- Unmaintained with a possible soundness issue (json-rust issue 196)
+- Its number representation differs from f64 semantics used by most JSON crates
+
+## Problems with the evidence
+
+- Numbers are from a December 2021 run with serde_json 1.0.72; serde_json has changed a lot since
+- The benchmark is maintained by serde_json's author
+- json-rust was removed from the suite in 2023 citing the open soundness issue
+
+## Evidence
+
+<details>
+<summary>10 quotes from the sources, checked 2026-10-28</summary>
+
+> It does [very well in benchmarks](https://github.com/serde-rs/json-benchmark), in some cases it can even outperform parsing to structs.
+>
+> — [github.com/maciejhirsz/json-rust](https://github.com/maciejhirsz/json-rust)
+
+> ======= serde_json ======= parse|stringify ===== parse|stringify ====
+>
+> — [github.com/serde-rs/json-benchmark/blob/541d44987b0f68714638e66036c…](https://github.com/serde-rs/json-benchmark/blob/541d44987b0f68714638e66036c75813b6ff4bc4/README.md)
+
+> data/canada.json 320 MB/s 430 MB/s 580 MB/s 310 MB/s
+>
+> — [github.com/serde-rs/json-benchmark/blob/541d44987b0f68714638e66036c…](https://github.com/serde-rs/json-benchmark/blob/541d44987b0f68714638e66036c75813b6ff4bc4/README.md)
+
+> data/citm_catalog.json 420 MB/s 560 MB/s 710 MB/s 880 MB/s
+>
+> — [github.com/serde-rs/json-benchmark/blob/541d44987b0f68714638e66036c…](https://github.com/serde-rs/json-benchmark/blob/541d44987b0f68714638e66036c75813b6ff4bc4/README.md)
+
+> data/twitter.json 300 MB/s 910 MB/s 550 MB/s 1060 MB/s
+>
+> — [github.com/serde-rs/json-benchmark/blob/541d44987b0f68714638e66036c…](https://github.com/serde-rs/json-benchmark/blob/541d44987b0f68714638e66036c75813b6ff4bc4/README.md)
+
+> ======= json-rust ======== parse|stringify ===== parse|stringify ==== data/canada.json 390 MB/s 840 MB/s data/citm_catalog.json 520 MB/s 780 MB/s data/twitter.json 430 MB/s 1030 MB/s
+>
+> — [github.com/serde-rs/json-benchmark/blob/541d44987b0f68714638e66036c…](https://github.com/serde-rs/json-benchmark/blob/541d44987b0f68714638e66036c75813b6ff4bc4/README.md)
+
+> Intel(R) Core(TM) i7-6600U CPU @ 2.60GHz *(laptop CPU from 2015)*
+>
+> — [github.com/serde-rs/json-benchmark/blob/541d44987b0f68714638e66036c…](https://github.com/serde-rs/json-benchmark/blob/541d44987b0f68714638e66036c75813b6ff4bc4/README.md)
+
+> rustc 1.59.0-nightly (0b6f079e4 2021-12-07)
+>
+> — [github.com/serde-rs/json-benchmark/blob/541d44987b0f68714638e66036c…](https://github.com/serde-rs/json-benchmark/blob/541d44987b0f68714638e66036c75813b6ff4bc4/README.md)
+
+> One of the outstanding issues include [a possible soundness issue](https://github.com/maciejhirsz/json-rust/issues/196).
+>
+> — [github.com/rustsec/advisory-db/blob/main/crates/json/RUSTSEC-2022-0…](https://github.com/rustsec/advisory-db/blob/main/crates/json/RUSTSEC-2022-0081.md)
+
+> Remove json-rust from the suite
+>
+> — [api.github.com/repos/serde-rs/json-benchmark/commits/4791d043726640…](https://api.github.com/repos/serde-rs/json-benchmark/commits/4791d043726640fcc73236dc964219a63ab92d71)
+
+</details>

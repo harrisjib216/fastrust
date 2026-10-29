@@ -1,0 +1,124 @@
+{
+  "id": "https://github.com/anthropics/buffa",
+  "name": "buffa (protobuf with zero-copy view types)",
+  "domain": "server-and-networking",
+  "category": "protobuf-and-rpc",
+  "baseline": "prost 0.14 decoding into and encoding from owned generated structs",
+  "verdict": "downgrade",
+  "verdict_reason": "Decoding into owned structs, buffa and prost trade wins by message shape (prost 16-20% ahead on two of five shapes; the independent benchmark puts them within 11%). The large gains, up to 2.8x, come only from buffa's borrowed view types, a different API that prost lacks.",
+  "evidence_tier": "A",
+  "tier_reason": "Published benchmark code with pinned rustc 1.96.0, LTO and codegen-units=1 on a named bare-metal CPU, plus an independent run in rust_serialization_benchmark with rustc and CPU stated.",
+  "claimed_speedup": "buffa README, binary decode MiB/s (buffa owned, buffa view, prost): ApiResponse 575, 872, 550; LogRecord 572, 1,336, 481; AnalyticsEvent 123, 225, 148; GoogleMessage1 601, 786, 698; MediaFrame 10,619, 41,441, 6,002, with prost (bytes) 18,432 (owned vs prost 1.05x, 1.19x, 0.83x, 0.86x, 1.77x; view vs prost 1.59x, 2.78x, 1.52x, 1.13x, and 2.25x vs prost with bytes) (derived from page data). rust_serialization_benchmark: log decode 3.0463 ms vs 3.3833 ms, buffa borrowed decode 1.7834 ms (1.11x; 1.90x vs prost decode) (derived from page data); mesh decode 14.146 vs 14.186 ms, mesh encode 8.9798 vs 8.0827 ms (prost 1.11x faster) (derived from page data); mk48 encode 3.7747 vs 5.4524 ms (buffa 1.44x faster) (derived from page data)",
+  "workload": "buffa: five message shapes (ApiResponse, LogRecord, AnalyticsEvent, GoogleMessage1, MediaFrame), throughput of binary decode and encode on one pinned core, median of five passes. rust_serialization_benchmark: log (HTTP request logs with many strings), mesh (triangle array), minecraft_savedata and mk48 game updates; encode and decode time per data set.",
+  "metric": "throughput",
+  "hardware": "buffa: bare-metal Intel Xeon Platinum 8488C, turbo off, performance governor, one isolated core. rust_serialization_benchmark: AMD EPYC 7763 (4 vCPUs, Microsoft hypervisor).",
+  "os": "Linux",
+  "toolchain": "buffa: rust 1.96.0, lto=true, codegen-units=1, 64-byte block alignment (-Cllvm-args=-align-all-nofallthru-blocks=6), protoc 33.1. rust_serialization_benchmark: rustc 1.101.0-nightly (2026-10-04).",
+  "benchmark_date": "2026-10-05",
+  "benchmark_url": "https://github.com/anthropics/buffa/blob/main/benchmarks/charts/README.md",
+  "repo_url": "https://github.com/anthropics/buffa",
+  "docs_url": "https://docs.rs/buffa",
+  "license": "Apache-2.0",
+  "usability": "copyable",
+  "language": "Rust",
+  "platforms": "Any; pure Rust",
+  "install": "cargo add buffa",
+  "maintenance_status": "active",
+  "stars": 927,
+  "last_commit": "2026-10-20",
+  "one_liner": "Pure-Rust protobuf with editions support; about even with prost on owned types, 1.1-2.8x faster decode through zero-copy views.",
+  "how_it_is_fast": "Each message gets an owned type and a MessageView<'a> type that reads fields straight from the wire buffer, so strings and bytes are not copied or allocated. A lazy mode defers parsing of nested fields until accessed. The owned path is a conventional generated decoder, which is why it lands close to prost.",
+  "use_it_when": [
+    "You decode large volumes of messages and only read some fields, so borrowed views avoid most allocation.",
+    "You need protobuf editions support in pure Rust."
+  ],
+  "skip_it_when": [
+    "You decode into owned structs and expect a big speedup; the owned path is within about 20% of prost either way.",
+    "You rely on tonic's prost integration and do not want to change code generation.",
+    "You need JSON encoding speed: prost was 6-33% faster on JSON encode in buffa's own table."
+  ],
+  "caveats": [
+    "buffa's headline tables were measured at buffa v0.8.0; the independent rust_serialization_benchmark run uses 0.9.2.",
+    "buffa's methodology applies 64-byte block alignment to every Rust implementation, which it says measures the layout a profile-guided build would reach rather than a plain cargo build.",
+    "The large MediaFrame and AnalyticsEvent gains in lazy mode (up to +9538%) skip parsing work the other decoders do; they are not like-for-like."
+  ],
+  "tradeoffs": [
+    "View types carry a lifetime tied to the input buffer (OwnedView wraps the buffer for async use).",
+    "Young project (0.x) with a smaller user base than prost."
+  ],
+  "evidence": [
+    {
+      "url": "https://github.com/anthropics/buffa/blob/104716922c66e21cf26895a2a5a2a42e6292f9d4/README.md",
+      "quote": "| ApiResponse | 575 | 872 (+52%) | 912 (+59%) | 550 (−4%) | 546 (−5%) | 430 (−25%) | 175 (−70%) |"
+    },
+    {
+      "url": "https://github.com/anthropics/buffa/blob/104716922c66e21cf26895a2a5a2a42e6292f9d4/README.md",
+      "quote": "| LogRecord | 572 | 1,336 (+134%) | 1,716 (+200%) | 481 (−16%) | 477 (−17%) | 555 (−3%) | 161 (−72%) |"
+    },
+    {
+      "url": "https://github.com/anthropics/buffa/blob/104716922c66e21cf26895a2a5a2a42e6292f9d4/README.md",
+      "quote": "| AnalyticsEvent | 123 | 225 (+83%) | 11,873 (+9538%) | 148 (+20%) | 129 (+5%) | 222 (+80%) | 57 (−54%) |"
+    },
+    {
+      "url": "https://github.com/anthropics/buffa/blob/104716922c66e21cf26895a2a5a2a42e6292f9d4/README.md",
+      "quote": "| GoogleMessage1 | 601 | 786 (+31%) | 1,452 (+142%) | 698 (+16%) | 669 (+11%) | 373 (−38%) | 263 (−56%) |"
+    },
+    {
+      "url": "https://github.com/anthropics/buffa/blob/104716922c66e21cf26895a2a5a2a42e6292f9d4/README.md",
+      "quote": "| MediaFrame | 10,619 | 41,441 (+290%) | 40,678 (+283%) | 6,002 (−43%) | 18,432 (+74%) | 11,005 (+4%) | 1,890 (−82%) |"
+    },
+    {
+      "url": "https://github.com/anthropics/buffa/blob/104716922c66e21cf26895a2a5a2a42e6292f9d4/README.md",
+      "quote": "measured at buffa v0.8.0 on a quiesced bare-metal Intel Xeon Platinum 8488C (turbo disabled,"
+    },
+    {
+      "url": "https://github.com/anthropics/buffa/blob/104716922c66e21cf26895a2a5a2a42e6292f9d4/benchmarks/charts/README.md",
+      "quote": "rust **1.96.0**"
+    },
+    {
+      "url": "https://github.com/anthropics/buffa/blob/104716922c66e21cf26895a2a5a2a42e6292f9d4/benchmarks/charts/README.md",
+      "quote": "crate builds at **`lto=true, codegen-units=1`** plus **64-byte block alignment**"
+    },
+    {
+      "url": "https://github.com/djkoloski/rust_serialization_benchmark/blob/9afa003dbacabe00140bd6132ee5587d8514f06f/README.md",
+      "quote": "| protobuf:<br> [buffa 0.9.2][buffa] | <span title=\"encode\">*905.35 µs\\**</span> <span title=\"populate + encode\">*2.3891 ms\\**</span> | <span title=\"decode\">*3.0463 ms\\**</span> <span title=\"decode + convert\">*3.1747 ms\\**</span>"
+    },
+    {
+      "url": "https://github.com/djkoloski/rust_serialization_benchmark/blob/9afa003dbacabe00140bd6132ee5587d8514f06f/README.md",
+      "quote": "| protobuf:<br> [prost 0.14.4][prost] | <span title=\"encode\">*951.15 µs\\**</span> <span title=\"populate + encode\">*2.4626 ms\\**</span> | <span title=\"decode\">*3.3833 ms\\**</span> <span title=\"decode + convert\">*3.4300 ms\\**</span>"
+    },
+    {
+      "url": "https://github.com/djkoloski/rust_serialization_benchmark/blob/9afa003dbacabe00140bd6132ee5587d8514f06f/README.md",
+      "quote": "1.7834 ms"
+    },
+    {
+      "url": "https://github.com/djkoloski/rust_serialization_benchmark/blob/9afa003dbacabe00140bd6132ee5587d8514f06f/README.md",
+      "quote": "| protobuf:<br> [buffa 0.9.2][buffa] | <span title=\"encode\">*8.9798 ms\\**</span> <span title=\"populate + encode\">*11.462 ms\\**</span> | <span title=\"decode\">*14.146 ms\\**</span> <span title=\"decode + convert\">*13.864 ms\\**</span>"
+    },
+    {
+      "url": "https://github.com/djkoloski/rust_serialization_benchmark/blob/9afa003dbacabe00140bd6132ee5587d8514f06f/README.md",
+      "quote": "| protobuf:<br> [prost 0.14.4][prost] | <span title=\"encode\">*8.0827 ms\\**</span> <span title=\"populate + encode\">*8.8207 ms\\**</span> | <span title=\"decode\">*14.186 ms\\**</span> <span title=\"decode + convert\">*14.534 ms\\**</span>"
+    },
+    {
+      "url": "https://github.com/djkoloski/rust_serialization_benchmark/blob/9afa003dbacabe00140bd6132ee5587d8514f06f/README.md",
+      "quote": "| protobuf:<br> [buffa 0.9.2][buffa] | <span title=\"encode\">*3.7747 ms\\**</span> <span title=\"populate + encode\">*8.3004 ms\\**</span> | <span title=\"decode\">*8.8019 ms\\**</span> <span title=\"decode + convert\">*9.9886 ms\\**</span>"
+    },
+    {
+      "url": "https://github.com/djkoloski/rust_serialization_benchmark/blob/9afa003dbacabe00140bd6132ee5587d8514f06f/README.md",
+      "quote": "| protobuf:<br> [prost 0.14.4][prost] | <span title=\"encode\">*5.4524 ms\\**</span> <span title=\"populate + encode\">*9.3787 ms\\**</span> | <span title=\"decode\">*8.7450 ms\\**</span> <span title=\"decode + convert\">*9.5943 ms\\**</span>"
+    },
+    {
+      "url": "https://github.com/djkoloski/rust_serialization_benchmark/blob/9afa003dbacabe00140bd6132ee5587d8514f06f/README.md",
+      "quote": "rustc 1.101.0-nightly (282215592 2026-10-04)"
+    },
+    {
+      "url": "https://github.com/djkoloski/rust_serialization_benchmark/blob/9afa003dbacabe00140bd6132ee5587d8514f06f/README.md",
+      "quote": "Model name: AMD EPYC 7763 64-Core Processor"
+    },
+    {
+      "url": "https://github.com/djkoloski/rust_serialization_benchmark/blob/9afa003dbacabe00140bd6132ee5587d8514f06f/README.md",
+      "quote": "## Last updated: 2026-10-05 23:16:23"
+    }
+  ],
+  "checked": "2026-10-28"
+}

@@ -1,0 +1,99 @@
+{
+  "id": "https://github.com/burntsushi/rust-pcre2",
+  "name": "pcre2 (Rust bindings to PCRE2 with JIT)",
+  "domain": "text-processing",
+  "category": "regex",
+  "baseline": "regex 1.12.2",
+  "verdict": "reject",
+  "verdict_reason": "In the December 2025 rebar run, PCRE2's JIT has a search geometric mean of 6.00 against 3.08 for the regex crate, so it is slower overall. It wins specific workloads (unstructured-to-json, Unicode character data, some case-insensitive literals) and loses badly on others, such as the Cloudflare ReDoS patterns.",
+  "evidence_tier": "C",
+  "tier_reason": "Public harness with engine versions, but no hardware stated, and the regex crate's author also maintains rebar and these bindings.",
+  "claimed_speedup": "Slower overall: search geometric mean 6.00 (pcre2/jit) vs 3.08 (rust/regex), lower is better. Per-benchmark wins: unstructured-to-json 1656.4 MB/s vs 110.4 MB/s; sherlock-casei-ru 18.0 GB/s vs 8.4 GB/s. Losses: cloud-flare-redos 44.0 MB/s vs 563.8 MB/s. Without JIT, PCRE2 builds patterns fastest (compile geometric mean 1.41 vs 11.85) but searches slowest (114.75).",
+  "workload": "rebar curated set: 34 search benchmarks shared by pcre2/jit, plus compile-time benchmarks.",
+  "metric": "throughput",
+  "hardware": "",
+  "os": "",
+  "toolchain": "",
+  "benchmark_date": "2025-12-19",
+  "benchmark_url": "https://github.com/BurntSushi/rebar/blob/master/README.md",
+  "repo_url": "https://github.com/BurntSushi/rust-pcre2",
+  "docs_url": "https://docs.rs/pcre2",
+  "license": "Unlicense OR MIT",
+  "usability": "copyable",
+  "language": "Rust + C",
+  "platforms": "Wherever the PCRE2 C library builds (through pcre2-sys)",
+  "install": "cargo add pcre2",
+  "maintenance_status": "stale",
+  "stars": 64,
+  "last_commit": "2025-09-25",
+  "one_liner": "Rust bindings to PCRE2; the JIT wins some rebar workloads but is about 2x slower than the regex crate overall.",
+  "how_it_is_fast": "PCRE2's JIT compiles each pattern to native machine code for its backtracking matcher, which removes interpreter overhead and helps on patterns with few literals to prefilter on. It does not have the regex crate's lazy DFA or multi-literal SIMD prefilters.",
+  "use_it_when": [
+    "You need features the regex crate lacks, such as backreferences and look-around",
+    "Workloads like rebar's unstructured-to-json, where the JIT measured 1656.4 MB/s vs 110.4 MB/s"
+  ],
+  "skip_it_when": [
+    "Untrusted patterns or haystacks: PCRE2 is a backtracker with no linear-time guarantee; one cloud-flare-redos variant ran at 671.2 KB/s vs 79.6 GB/s for regex",
+    "As a general speed upgrade over the regex crate"
+  ],
+  "caveats": [
+    "Geometric means over different benchmark subsets (34 for pcre2/jit, 38 for rust/regex)",
+    "No CPU, OS or flags stated"
+  ],
+  "tradeoffs": [
+    "C dependency and unsafe FFI",
+    "Exponential worst cases on some patterns",
+    "Thin wrapper; the README says it covers little of PCRE2 and maintenance bandwidth is limited"
+  ],
+  "evidence": [
+    {
+      "url": "https://github.com/BurntSushi/rebar/blob/master/README.md",
+      "quote": "| [pcre2/jit](benchmarks/../engines/pcre2) | 10.47 2025-10-21 | 6.00 | 34 |"
+    },
+    {
+      "url": "https://github.com/BurntSushi/rebar/blob/master/README.md",
+      "quote": "| [rust/regex](benchmarks/../engines/rust/regex) | 1.12.2 | 3.08 | 38 |"
+    },
+    {
+      "url": "https://github.com/BurntSushi/rebar/blob/master/README.md",
+      "quote": "| [pcre2](benchmarks/../engines/pcre2) | 10.47 2025-10-21 | 114.75 | 33 |"
+    },
+    {
+      "url": "https://github.com/BurntSushi/rebar/blob/master/README.md",
+      "quote": "| [pcre2](benchmarks/../engines/pcre2) | 10.47 2025-10-21 | 1.41 | 10 |"
+    },
+    {
+      "url": "https://github.com/BurntSushi/rebar/blob/master/README.md",
+      "quote": "| [rust/regex](benchmarks/../engines/rust/regex) | 1.12.2 | 11.85 | 14 |"
+    },
+    {
+      "url": "https://github.com/BurntSushi/rebar/blob/master/README.md",
+      "quote": "| pcre2/jit | **1656.4 MB/s** | 8.87us |"
+    },
+    {
+      "url": "https://github.com/BurntSushi/rebar/blob/master/README.md",
+      "quote": "| rust/regex | 110.4 MB/s | 20.13us |"
+    },
+    {
+      "url": "https://github.com/BurntSushi/rebar/blob/master/README.md",
+      "quote": "| pcre2/jit | 26.3 GB/s | 18.8 GB/s | 32.8 GB/s | **18.0 GB/s** | 41.7 GB/s |"
+    },
+    {
+      "url": "https://github.com/BurntSushi/rebar/blob/master/README.md",
+      "quote": "| rust/regex | 29.4 GB/s | 10.5 GB/s | 35.6 GB/s | 8.4 GB/s | 47.7 GB/s |"
+    },
+    {
+      "url": "https://github.com/BurntSushi/rebar/blob/master/README.md",
+      "quote": "| pcre2/jit | 44.0 MB/s | 46.8 MB/s | 671.2 KB/s |"
+    },
+    {
+      "url": "https://github.com/BurntSushi/rebar/blob/master/README.md",
+      "quote": "| rust/regex | **563.8 MB/s** | 1677.2 MB/s | **79.6 GB/s** |"
+    },
+    {
+      "url": "https://github.com/BurntSushi/rust-pcre2/blob/master/README.md",
+      "quote": "There are no specific plans\nin place to build out the wrapper further"
+    }
+  ],
+  "checked": "2026-10-28"
+}

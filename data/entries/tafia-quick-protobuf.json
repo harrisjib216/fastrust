@@ -1,0 +1,89 @@
+{
+  "id": "https://github.com/tafia/quick-protobuf",
+  "name": "quick-protobuf (borrowing protobuf decoder)",
+  "domain": "server-and-networking",
+  "category": "protobuf-and-rpc",
+  "baseline": "prost (version at the time of the 2018 results; the perftest manifest now names prost 0.9.0)",
+  "verdict": "downgrade",
+  "verdict_reason": "quick-protobuf reads strings and byte fields 1.3x to 7.8x faster than prost by borrowing from the input, but prost encodes faster in several tests, and the only published numbers date from 2018. Since then prost can decode bytes fields into zero-copy bytes::Bytes and has had years of optimization, while quick-protobuf has had no commit since February 2024.",
+  "evidence_tier": "C",
+  "tier_reason": "First-party numbers from the crate's own perftest; the benchmark code is public but no hardware, rustc version or date is given next to the results.",
+  "claimed_speedup": "ns/iter, quick-protobuf vs prost reads: test1 31 vs 53, test_strings 185 vs 247, test_small_bytearrays 99 vs 729, test_large_bytearrays 8598 vs 66959 (1.71x, 1.34x, 7.36x, 7.79x) (derived from page data). prost faster on writes: test_optional_messages 104 vs 157, test_repeated_packed_int32 46 vs 69, test_small_bytearrays 318 vs 463 ns/iter",
+  "workload": "rust-protobuf's perftest messages adapted for three crates: small scalar messages, repeated bools and packed int32, nested and optional messages, strings, small and large byte arrays; write and read per message set.",
+  "metric": "time",
+  "hardware": "",
+  "os": "",
+  "toolchain": "",
+  "benchmark_date": "2018",
+  "benchmark_url": "https://github.com/tafia/quick-protobuf/tree/master/perftest",
+  "repo_url": "https://github.com/tafia/quick-protobuf",
+  "docs_url": "https://docs.rs/quick-protobuf",
+  "license": "MIT",
+  "usability": "copyable",
+  "language": "Rust",
+  "platforms": "Any; no_std support",
+  "install": "cargo add quick-protobuf",
+  "maintenance_status": "stale",
+  "stars": 473,
+  "last_commit": "2024-02-14",
+  "one_liner": "Protobuf crate whose generated types borrow strings and bytes from the input; 2018 numbers show faster reads than prost, slower writes.",
+  "how_it_is_fast": "pb-rs generates structs with Cow<str> and Cow<[u8]> fields that point into the input buffer, so reading a message does not allocate for strings and byte arrays. Packed fixed-size repeated fields can be read without copying. The gain grows with payload size, which is why the large byte-array read shows the biggest gap.",
+  "use_it_when": [
+    "Messages are mostly strings or large byte fields, you decode far more than you encode, and the input buffer outlives the decoded message."
+  ],
+  "skip_it_when": [
+    "You use tonic: it is built around prost-generated types.",
+    "Encoding speed matters; prost was faster on most write tests even in 2018.",
+    "You need current protobuf features (editions, well-known types, reflection) or an actively maintained code generator."
+  ],
+  "caveats": [
+    "The results block in perftest/README.md was last changed in 2018 according to the git history, while the manifest was later bumped to prost 0.9.0 without rerunning; the prost version actually measured is unknown.",
+    "No hardware, rustc version or flags are given.",
+    "prost can now decode bytes fields as bytes::Bytes, zero-copy slices of the input (buffa's 2026 tables measure it as \"prost (bytes)\"), which addresses the byte-array case; no newer quick-protobuf comparison exists.",
+    "quick-protobuf is not in rust_serialization_benchmark, the main independent Rust serialization benchmark."
+  ],
+  "tradeoffs": [
+    "Generated types carry a lifetime tied to the input buffer.",
+    "Separate code generator (pb-rs) and a much smaller user base than prost.",
+    "No commits since 2024-02-14."
+  ],
+  "evidence": [
+    {
+      "url": "https://github.com/tafia/quick-protobuf/blob/54e7d6c5d981c6f7cec2e9a2167c10ed0f9392b4/perftest/README.md",
+      "quote": "labels rust-protobuf quick-protobuf prost quick/rust prost/rust ns/iter ns/iter ns/iter % %"
+    },
+    {
+      "url": "https://github.com/tafia/quick-protobuf/blob/54e7d6c5d981c6f7cec2e9a2167c10ed0f9392b4/perftest/README.md",
+      "quote": "test1 write 72 20 21 72.2 70.8 read 71 31 53 56.3 25.4"
+    },
+    {
+      "url": "https://github.com/tafia/quick-protobuf/blob/54e7d6c5d981c6f7cec2e9a2167c10ed0f9392b4/perftest/README.md",
+      "quote": "test_strings write 146 63 59 56.8 59.6 read 345 185 247 46.4 28.4"
+    },
+    {
+      "url": "https://github.com/tafia/quick-protobuf/blob/54e7d6c5d981c6f7cec2e9a2167c10ed0f9392b4/perftest/README.md",
+      "quote": "test_small_bytearrays write 479 463 318 3.3 33.6 read 747 99 729 86.7 2.4"
+    },
+    {
+      "url": "https://github.com/tafia/quick-protobuf/blob/54e7d6c5d981c6f7cec2e9a2167c10ed0f9392b4/perftest/README.md",
+      "quote": "test_large_bytearrays write 109299 96753 89523 11.5 18.1 read 47513 8598 66959 81.9 -40.9"
+    },
+    {
+      "url": "https://github.com/tafia/quick-protobuf/blob/54e7d6c5d981c6f7cec2e9a2167c10ed0f9392b4/perftest/README.md",
+      "quote": "test_optional_messages write 223 157 104 29.6 53.4"
+    },
+    {
+      "url": "https://github.com/tafia/quick-protobuf/blob/54e7d6c5d981c6f7cec2e9a2167c10ed0f9392b4/perftest/README.md",
+      "quote": "test_repeated_packed_int32 write 135 69 46 48.9 65.9"
+    },
+    {
+      "url": "https://github.com/tafia/quick-protobuf/blob/54e7d6c5d981c6f7cec2e9a2167c10ed0f9392b4/perftest/Cargo.toml",
+      "quote": "prost = \"0.9.0\""
+    },
+    {
+      "url": "https://github.com/tafia/quick-protobuf",
+      "quote": "in particular when working with string, bytes and repeated packed fixed size fields (no extra allocation)"
+    }
+  ],
+  "checked": "2026-10-28"
+}

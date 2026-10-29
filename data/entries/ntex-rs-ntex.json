@@ -1,0 +1,157 @@
+{
+  "id": "https://github.com/ntex-rs/ntex",
+  "name": "ntex (web framework, actix-web fork)",
+  "domain": "server-and-networking",
+  "category": "web-frameworks",
+  "baseline": "axum on hyper and Tokio: TechEmpower Round 23 entry (axum 0.7.9, one current-thread runtime per core) and HttpArena 2026 standard-mode entry (axum 0.8, default multi-threaded runtime)",
+  "verdict": "downgrade",
+  "verdict_reason": "Against axum in its default multi-threaded setup (HttpArena) ntex is 1.3x to 2.2x faster. Against a thread-per-core axum (TechEmpower Round 23) the lead is 2-3% on plaintext and JSON and 9% on fortunes, so most of the gap is runtime configuration, not framework overhead.",
+  "evidence_tier": "A",
+  "tier_reason": "Two public benchmarks with published implementation code and stated hardware: TechEmpower Round 23 and HttpArena.",
+  "claimed_speedup": "TechEmpower Round 23 peak total requests per 15 s, ntex vs axum: plaintext 190597520 vs 185884960, JSON 41510329 vs 40646919, fortunes (ntex-db vs axum-pg) 18155230 vs 16713989 (1.03x, 1.02x, 1.09x) (derived from page data). HttpArena, req/s ntex vs axum: baseline-4096 2168712 vs 1080638, json-tls-4096 1254763 vs 967831, json-comp-4096 589934 vs 268142, limited-conn-4096 1449176 vs 685038 (2.01x, 1.30x, 2.20x, 2.12x) (derived from page data)",
+  "workload": "TechEmpower Framework Benchmarks. plaintext: \"Hello, World!\" with HTTP/1.1 pipelining at 256 to 16,384 connections; JSON: one small object serialized per request at 16 to 512 connections; fortunes: fetch 12 rows from Postgres, add one, sort, render an escaped HTML template. Peak requests per second across the concurrency levels, 15-second runs. HttpArena: baseline is mixed GET/POST with query parsing at 4,096 connections; json-tls is JSON over HTTP/1.1 with TLS; json-comp adds gzip or brotli; limited-conn closes each connection after 10 requests.",
+  "metric": "throughput",
+  "hardware": "TechEmpower Round 23: ProLiant DL360 Gen10 Plus servers, Intel Xeon Gold 6330 @ 2.00GHz (56 cores), 64 GB, 40 Gbps Ethernet (separate server, database and load-generator machines). HttpArena: one AMD Threadripper PRO 3995WX workstation (64 cores) running server and load generator with pinned cores.",
+  "os": "Linux, in Docker",
+  "toolchain": "TechEmpower ntex: rust:latest image at the time, RUSTFLAGS=\"-C target-cpu=native\", features tokio, mimalloc. HttpArena: each entry's own Dockerfile.",
+  "benchmark_date": "2026-09",
+  "benchmark_url": "https://www.http-arena.com/",
+  "repo_url": "https://github.com/ntex-rs/ntex",
+  "docs_url": "https://docs.rs/ntex",
+  "license": "MIT OR Apache-2.0",
+  "usability": "copyable",
+  "language": "Rust",
+  "platforms": "Linux, macOS and Windows (CI on all three); Tokio or compio runtimes",
+  "install": "cargo add ntex",
+  "maintenance_status": "active",
+  "stars": 2546,
+  "last_commit": "2026-10-28",
+  "one_liner": "actix-style web framework that beats default-config axum 1.3-2.2x on HttpArena but is within 2-9% of thread-per-core axum on TechEmpower.",
+  "how_it_is_fast": "ntex runs one single-threaded event loop per core and keeps each connection on its worker, avoiding work-stealing and cross-thread wakeups. It uses its own buffer types (ntex-bytes) and a codec-based HTTP/1 implementation.",
+  "use_it_when": [
+    "You serve many small requests per second and would otherwise run axum with Tokio's default multi-threaded scheduler.",
+    "You want MQTT, AMQP or gRPC servers from the same project family."
+  ],
+  "skip_it_when": [
+    "You can run axum thread-per-core; TechEmpower shows that closes most of the gap.",
+    "Your handlers are dominated by database or network waits.",
+    "You rely on tower middleware or hyper-based crates."
+  ],
+  "caveats": [
+    "TechEmpower implementations are written and tuned by each framework's community (custom allocators, target-cpu=native, LTO, thread-per-core setups), so they show a ceiling, not what a default application gets.",
+    "The plaintext test uses HTTP pipelining, which almost no real client does. Servers that batch pipelined responses into one write post numbers several times higher than they reach on ordinary traffic. Fortunes is the most realistic test, and the database driver weighs on it as much as the framework does.",
+    "Requests per second are derived from totalRequests divided by the 15-second duration in TechEmpower's raw results file. The interactive results page draws the same values with JavaScript.",
+    "Round 23 (run 2025-01-30, published 2025-03-17) is the most recent official round, and the TechEmpower FrameworkBenchmarks repository is now archived (last push 2026-03-24), so no newer TechEmpower data is coming.",
+    "HttpArena runs the server and the load generator on the same 64-core workstation with pinned cores, so results reflect loopback networking.",
+    "HttpArena results for each framework are committed separately (axum.json last updated 2026-09-11), not in one synchronized run.",
+    "ntex's README makes no numeric performance claim; the reputation comes from benchmark rankings."
+  ],
+  "tradeoffs": [
+    "Thread-per-core scheduling can leave cores idle when load is uneven across connections.",
+    "Not compatible with tower or hyper middleware; major versions move quickly (both benchmarks used ntex 2, the current release is 4.4).",
+    "MSRV 1.97 for the latest release."
+  ],
+  "evidence": [
+    {
+      "url": "https://www.techempower.com/benchmarks/results/round23/ph.json",
+      "quote": "\"ntex\": [ { \"latencyAvg\": \"173.95us\", \"latencyStdev\": \"145.70us\", \"latencyMax\": \"19.01ms\", \"totalRequests\": 177265040, \"startTime\": 1738495183, \"endTime\": 1738495198 }, { \"latencyAvg\": \"709.34us\", \"latencyStdev\": \"474.85us\", \"latencyMax\": \"26.63ms\", \"totalRequests\": 190597520"
+    },
+    {
+      "url": "https://www.techempower.com/benchmarks/results/round23/ph.json",
+      "quote": "\"axum\": [ { \"latencyAvg\": \"188.83us\", \"latencyStdev\": \"134.69us\", \"latencyMax\": \"19.43ms\", \"totalRequests\": 170630176, \"startTime\": 1738792996, \"endTime\": 1738793011 }, { \"latencyAvg\": \"756.90us\", \"latencyStdev\": \"487.97us\", \"latencyMax\": \"26.12ms\", \"totalRequests\": 185884960"
+    },
+    {
+      "url": "https://www.techempower.com/benchmarks/results/round23/ph.json",
+      "quote": "\"ntex\": [ { \"latencyAvg\": \"601.24us\", \"latencyStdev\": \"178.31us\", \"latencyMax\": \"4.51ms\", \"totalRequests\": 397147, \"startTime\": 1738495049, \"endTime\": 1738495064 }, { \"latencyAvg\": \"519.67us\", \"latencyStdev\": \"200.19us\", \"latencyMax\": \"4.32ms\", \"totalRequests\": 916842, \"startTime\": 1738495066, \"endTime\": 1738495082 }, { \"latencyAvg\": \"54.00us\", \"latencyStdev\": \"39.57us\", \"latencyMax\": \"8.08ms\", \"totalRequests\": 15414965, \"startTime\": 1738495084, \"endTime\": 1738495099 }, { \"latencyAvg\": \"71.17us\", \"latencyStdev\": \"42.76us\", \"latencyMax\": \"4.20ms\", \"totalRequests\": 23058347, \"startTime\": 1738495101, \"endTime\": 1738495116 }, { \"latencyAvg\": \"102.03us\", \"latencyStdev\": \"55.50us\", \"latencyMax\": \"6.93ms\", \"totalRequests\": 31868539, \"startTime\": 1738495118, \"endTime\": 1738495133 }, { \"latencyAvg\": \"176.16us\", \"latencyStdev\": \"103.33us\", \"latencyMax\": \"15.85ms\", \"totalRequests\": 41510329"
+    },
+    {
+      "url": "https://www.techempower.com/benchmarks/results/round23/ph.json",
+      "quote": "\"axum\": [ { \"latencyAvg\": \"571.66us\", \"latencyStdev\": \"177.18us\", \"latencyMax\": \"1.15ms\", \"totalRequests\": 417065, \"startTime\": 1738792863, \"endTime\": 1738792878 }, { \"latencyAvg\": \"522.36us\", \"latencyStdev\": \"200.74us\", \"latencyMax\": \"1.29ms\", \"totalRequests\": 911833, \"startTime\": 1738792880, \"endTime\": 1738792895 }, { \"latencyAvg\": \"53.42us\", \"latencyStdev\": \"19.10us\", \"latencyMax\": \"1.61ms\", \"totalRequests\": 15515683, \"startTime\": 1738792897, \"endTime\": 1738792912 }, { \"latencyAvg\": \"72.21us\", \"latencyStdev\": \"28.67us\", \"latencyMax\": \"803.00us\", \"totalRequests\": 22667610, \"startTime\": 1738792914, \"endTime\": 1738792929 }, { \"latencyAvg\": \"111.81us\", \"latencyStdev\": \"54.12us\", \"latencyMax\": \"4.05ms\", \"totalRequests\": 29435027, \"startTime\": 1738792931, \"endTime\": 1738792947 }, { \"latencyAvg\": \"181.12us\", \"latencyStdev\": \"85.73us\", \"latencyMax\": \"5.79ms\", \"totalRequests\": 40646919"
+    },
+    {
+      "url": "https://www.techempower.com/benchmarks/results/round23/ph.json",
+      "quote": "\"ntex-db\": [ { \"latencyAvg\": \"1.38ms\", \"latencyStdev\": \"190.03us\", \"latencyMax\": \"4.63ms\", \"totalRequests\": 172999, \"startTime\": 1738494405, \"endTime\": 1738494420 }, { \"latencyAvg\": \"1.33ms\", \"latencyStdev\": \"212.09us\", \"latencyMax\": \"4.94ms\", \"totalRequests\": 358755, \"startTime\": 1738494422, \"endTime\": 1738494437 }, { \"latencyAvg\": \"1.19ms\", \"latencyStdev\": \"259.01us\", \"latencyMax\": \"5.32ms\", \"totalRequests\": 703898, \"startTime\": 1738494439, \"endTime\": 1738494454 }, { \"latencyAvg\": \"187.95us\", \"latencyStdev\": \"84.35us\", \"latencyMax\": \"4.48ms\", \"totalRequests\": 8961394, \"startTime\": 1738494456, \"endTime\": 1738494471 }, { \"latencyAvg\": \"256.34us\", \"latencyStdev\": \"91.97us\", \"latencyMax\": \"8.10ms\", \"totalRequests\": 13117893, \"startTime\": 1738494473, \"endTime\": 1738494488 }, { \"latencyAvg\": \"418.75us\", \"latencyStdev\": \"147.15us\", \"latencyMax\": \"17.92ms\", \"totalRequests\": 18155230"
+    },
+    {
+      "url": "https://www.techempower.com/benchmarks/results/round23/ph.json",
+      "quote": "\"axum-pg\": [ { \"latencyAvg\": \"1.33ms\", \"latencyStdev\": \"180.99us\", \"latencyMax\": \"2.07ms\", \"totalRequests\": 179234, \"startTime\": 1738790959, \"endTime\": 1738790974 }, { \"latencyAvg\": \"1.31ms\", \"latencyStdev\": \"233.59us\", \"latencyMax\": \"2.35ms\", \"totalRequests\": 365430, \"startTime\": 1738790976, \"endTime\": 1738790991 }, { \"latencyAvg\": \"1.14ms\", \"latencyStdev\": \"293.02us\", \"latencyMax\": \"2.68ms\", \"totalRequests\": 732332, \"startTime\": 1738790993, \"endTime\": 1738791008 }, { \"latencyAvg\": \"242.48us\", \"latencyStdev\": \"127.75us\", \"latencyMax\": \"3.13ms\", \"totalRequests\": 7005207, \"startTime\": 1738791010, \"endTime\": 1738791025 }, { \"latencyAvg\": \"280.38us\", \"latencyStdev\": \"97.57us\", \"latencyMax\": \"2.09ms\", \"totalRequests\": 11975238, \"startTime\": 1738791027, \"endTime\": 1738791042 }, { \"latencyAvg\": \"453.73us\", \"latencyStdev\": \"142.02us\", \"latencyMax\": \"3.81ms\", \"totalRequests\": 16713989"
+    },
+    {
+      "url": "https://github.com/MDA2AV/HttpArena/blob/d2df064173444ef3ca9e234bddf2263b6fc6f938/site/data/results/ntex.json",
+      "quote": "\"baseline-4096\": { \"framework\": \"ntex\", \"language\": \"Rust\", \"rps\": 2168712,"
+    },
+    {
+      "url": "https://github.com/MDA2AV/HttpArena/blob/d2df064173444ef3ca9e234bddf2263b6fc6f938/site/data/results/axum.json",
+      "quote": "\"baseline-4096\": { \"framework\": \"axum\", \"language\": \"Rust\", \"rps\": 1080638,"
+    },
+    {
+      "url": "https://github.com/MDA2AV/HttpArena/blob/d2df064173444ef3ca9e234bddf2263b6fc6f938/site/data/results/ntex.json",
+      "quote": "\"json-tls-4096\": { \"framework\": \"ntex\", \"language\": \"Rust\", \"rps\": 1254763,"
+    },
+    {
+      "url": "https://github.com/MDA2AV/HttpArena/blob/d2df064173444ef3ca9e234bddf2263b6fc6f938/site/data/results/axum.json",
+      "quote": "\"json-tls-4096\": { \"framework\": \"axum\", \"language\": \"Rust\", \"rps\": 967831,"
+    },
+    {
+      "url": "https://github.com/MDA2AV/HttpArena/blob/d2df064173444ef3ca9e234bddf2263b6fc6f938/site/data/results/ntex.json",
+      "quote": "\"json-comp-4096\": { \"framework\": \"ntex\", \"language\": \"Rust\", \"rps\": 589934,"
+    },
+    {
+      "url": "https://github.com/MDA2AV/HttpArena/blob/d2df064173444ef3ca9e234bddf2263b6fc6f938/site/data/results/axum.json",
+      "quote": "\"json-comp-4096\": { \"framework\": \"axum\", \"language\": \"Rust\", \"rps\": 268142,"
+    },
+    {
+      "url": "https://github.com/MDA2AV/HttpArena/blob/d2df064173444ef3ca9e234bddf2263b6fc6f938/site/data/results/ntex.json",
+      "quote": "\"limited-conn-4096\": { \"framework\": \"ntex\", \"language\": \"Rust\", \"rps\": 1449176,"
+    },
+    {
+      "url": "https://github.com/MDA2AV/HttpArena/blob/d2df064173444ef3ca9e234bddf2263b6fc6f938/site/data/results/axum.json",
+      "quote": "\"limited-conn-4096\": { \"framework\": \"axum\", \"language\": \"Rust\", \"rps\": 685038,"
+    },
+    {
+      "url": "https://github.com/MDA2AV/HttpArena/blob/d2df064173444ef3ca9e234bddf2263b6fc6f938/frameworks/axum/meta.json",
+      "quote": "Axum 0.8 on hyper with the multi-threaded Tokio runtime, default configuration."
+    },
+    {
+      "url": "https://github.com/MDA2AV/HttpArena/blob/d2df064173444ef3ca9e234bddf2263b6fc6f938/frameworks/ntex/meta.json",
+      "quote": "ntex 2 on its own tokio-backed runtime, default configuration."
+    },
+    {
+      "url": "https://github.com/MDA2AV/HttpArena/blob/d2df064173444ef3ca9e234bddf2263b6fc6f938/site/content/docs/hardware/_index.md",
+      "quote": "The reference hardware for HttpArena results is a single-socket AMD Threadripper PRO 3995WX workstation."
+    },
+    {
+      "url": "https://github.com/MDA2AV/HttpArena/blob/d2df064173444ef3ca9e234bddf2263b6fc6f938/README.md",
+      "quote": "Mixed GET/POST with query parsing (512/4K conns)"
+    },
+    {
+      "url": "https://www.techempower.com/benchmarks/results/round23/ph.json",
+      "quote": "\"name\": \"Continuous Benchmarking Run 2025-01-30 18:47:41\""
+    },
+    {
+      "url": "https://www.techempower.com/benchmarks/results/round23/ph.json",
+      "quote": "\"duration\": 15, \"rawData\": {"
+    },
+    {
+      "url": "https://www.techempower.com/blog/2025/03/17/framework-benchmarks-round-23/",
+      "quote": "Intel Xeon Gold 6330 CPU @ 2.00GHz (56 cores)"
+    },
+    {
+      "url": "https://www.techempower.com/blog/2025/03/17/framework-benchmarks-round-23/",
+      "quote": "Mellanox Technologies MT28908 Family [ConnectX-6] 40Gbps Ethernet"
+    },
+    {
+      "url": "https://github.com/TechEmpower/FrameworkBenchmarks/wiki/Project-Information-Framework-Tests-Overview",
+      "quote": "Requests will be sent using HTTP pipelining."
+    },
+    {
+      "url": "https://github.com/TechEmpower/FrameworkBenchmarks/wiki/Project-Information-Framework-Tests-Overview",
+      "quote": "exercises the ORM, database connectivity, dynamic-size collections, sorting, server-side templates, XSS countermeasures, and character encoding"
+    },
+    {
+      "url": "https://github.com/TechEmpower/FrameworkBenchmarks/blob/523534bb61450e3522d775a749ad060753e26e3a/frameworks/Rust/axum/src/server.rs",
+      "quote": "Start a single-threaded tokio runtime on multiple threads."
+    }
+  ],
+  "checked": "2026-10-28"
+}

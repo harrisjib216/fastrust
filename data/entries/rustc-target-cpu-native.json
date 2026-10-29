@@ -1,0 +1,67 @@
+{
+  "id": "rustc:target-cpu-native",
+  "name": "-C target-cpu=native",
+  "domain": "tooling",
+  "category": "runtime-build-settings",
+  "baseline": "cargo build --release for the target's default generic CPU",
+  "verdict": "downgrade",
+  "verdict_reason": "It helps code with loops LLVM can vectorize, but it is not a general speedup. When the rust-lang project built rustc for x86-64-v3, the reviewer called the result a significant wall-time loss despite instruction-count gains of up to 2.5-6.6% on a few benchmarks, and native binaries can fail on older CPUs.",
+  "evidence_tier": "B",
+  "tier_reason": "A rust-lang project measurement on rustc-perf, though from 2020 (LLVM 11 era) and using x86-64-v3 rather than native; the Rust Performance Book gives no numbers.",
+  "claimed_speedup": "Rust Performance Book: can improve runtime speed, especially with vectorization opportunities (no numbers). rustc built for x86-64-v3: instruction counts down up to -2.5% (inflate-check) and -6.6% (keccak-debug), but 'a pretty significant wall time loss' overall; x86-64-v2 'a slight win (or perhaps lost in the noise)'",
+  "workload": "The Rust compiler built with -Ctarget-cpu=x86-64-v2 and x86-64-v3, timed on the rustc-perf suite",
+  "metric": "time",
+  "hardware": "rustc-perf benchmark machine (not stated)",
+  "os": "Linux",
+  "toolchain": "rustc with a backported LLVM patch adding x86-64-v2/v3/v4 CPU levels (November 2020)",
+  "benchmark_date": "2020-11",
+  "benchmark_url": "https://github.com/rust-lang/rust/pull/79043",
+  "repo_url": null,
+  "docs_url": "https://nnethercote.github.io/perf-book/build-configuration.html",
+  "license": null,
+  "usability": "platform",
+  "language": "Rust",
+  "platforms": "All targets; 'native' means the build machine's CPU",
+  "install": "RUSTFLAGS=\"-C target-cpu=native\" cargo build --release",
+  "maintenance_status": "active",
+  "stars": null,
+  "last_commit": "",
+  "one_liner": "Compiling for the build machine's exact CPU helps vectorizable loops; for general code measured gains were nil or negative.",
+  "how_it_is_fast": "target-cpu=native lets LLVM use every instruction-set extension on the build machine, such as AVX2 or AVX-512, and tune for that CPU. Loops that auto-vectorize can process more data per instruction; branchy code with little data parallelism changes little.",
+  "use_it_when": [
+    "Binaries built and run on the same machine or a uniform fleet",
+    "Numeric or data-parallel loops that LLVM can auto-vectorize"
+  ],
+  "skip_it_when": [
+    "Distributing binaries: they can fail with illegal-instruction errors on older CPUs",
+    "Branchy, pointer-heavy code such as compilers and parsers, where the measured effect was nil or negative",
+    "Cross-compiling, where 'native' describes the wrong machine"
+  ],
+  "caveats": [
+    "The only measured numbers found are from 2020 and target x86-64-v3, not native",
+    "The test program was rustc; numeric code may benefit more"
+  ],
+  "tradeoffs": [
+    "Non-portable binaries",
+    "Output depends on the build machine, so builds differ across machines"
+  ],
+  "evidence": [
+    {
+      "url": "https://nnethercote.github.io/perf-book/build-configuration.html",
+      "quote": "This can improve runtime speed, especially if the compiler finds vectorization opportunities in your code."
+    },
+    {
+      "url": "https://github.com/rust-lang/rust/pull/79043",
+      "quote": "This PR instructs rustbuild to compile the compiler with the -Ctarget-cpu=x86-64-v2 option enabled in hope of getting some optimization gains from autovectorization."
+    },
+    {
+      "url": "https://github.com/rust-lang/rust/pull/79043",
+      "quote": "V3 looks like a pretty significant wall time loss, V2 looks like a slight win (or perhaps lost in the noise). My guess is that this is not worth it at this time."
+    },
+    {
+      "url": "https://github.com/rust-lang/rust/pull/79043",
+      "quote": "Yeah there are some single digit improvements in instruction counts (up to -2.5% in inflate-check full for v3, up to -6.6% in keccak-debug full)"
+    }
+  ],
+  "checked": "2026-10-28"
+}

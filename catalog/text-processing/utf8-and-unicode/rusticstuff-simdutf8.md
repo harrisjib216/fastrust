@@ -1,0 +1,85 @@
+# simdutf8 (SIMD UTF-8 validation)
+
+<sub>[fastrust](../../../README.md) › [Catalog](../../README.md) › [Text processing](../README.md) › [UTF-8 and Unicode](README.md)</sub>
+
+**Tier A** (reproducible public benchmark) · ✅ Holds up · Open source · `Rust` · `MIT OR Apache-2.0` · 🟢 active
+
+> SIMD drop-in for std::str::from_utf8: up to 23x faster on valid non-ASCII text and up to 4x on ASCII for inputs of 64 bytes or more.
+
+| | |
+|---|---|
+| **Beats** | std::str::from_utf8 (Rust 1.52.0 on x86_64, 1.54.0-nightly on aarch64) |
+| **Claimed result** | Up to 23 times faster than std on valid non-ASCII and up to four times faster on pure ASCII (x86-64, Zen2); up to eleven times and four times on Apple M1 |
+| **Workload** | criterion throughput by charset and input size, from the empty slice to 64 KiB, plus a 64 KiB input whose first character is invalid. |
+| **Metric** | throughput |
+| **Hardware** | AMD Ryzen 7 PRO 3700 (Zen2); Apple M1 MacBook Air |
+| **OS** | Linux; macOS |
+| **Toolchain** | rustc 1.52.0 (x86_64); rustc 1.54.0-nightly 2021-05-08 (aarch64) |
+| **Measured** | 2021-05 |
+| **Adoption** | 606 stars |
+| **Last commit** | 2026-06-15 |
+| **Platforms** | x86/x86_64 (SSE4.2, AVX2, AVX-512 on Rust 1.89+, runtime detection), aarch64 NEON, wasm32 simd128, armv7 NEON on nightly; no_std; std fallback elsewhere |
+| **Install** | cargo add simdutf8 |
+| **Links** | [repository](https://github.com/rusticstuff/simdutf8) · [documentation](https://docs.rs/simdutf8) · [benchmark](https://github.com/rusticstuff/simdutf8/blob/main/README.md) |
+
+## Verdict
+
+The README reports up to 23 times faster than std on valid non-ASCII and up to four times on ASCII on Zen2, and up to eleven and four times on Apple M1. The runs date from 2021, but std's validator has not been replaced since: two rewrite PRs (rust-lang/rust #107760 and #136693) were closed unmerged, the second in August 2026.
+
+**Why tier A:** Benchmark code, data and saved criterion baselines are in the repository, with CPUs, OSes and rustc versions stated.
+
+## Use it when
+
+- Validating large buffers of text from network or disk, especially non-ASCII text
+- Code that calls from_utf8 on every read buffer or record
+
+## Skip it when
+
+- Inputs under 64 bytes, which simdutf8 hands to core::str::from_utf8 anyway
+- Builds with opt-level = "z", which the README says prevents inlining and makes it quite slow
+
+## How it is fast
+
+It ports simdjson's lookup algorithm: vector table lookups on each byte's nibbles flag invalid sequences 32 or 64 bytes at a time, with an extra pure-ASCII fast path. The basic API only checks an error accumulator at the end, and on x86 the widest supported implementation is picked at runtime.
+
+## What it costs
+
+- unsafe SIMD code (the README cites fuzzing and no known bugs)
+- basic::from_utf8 returns a zero-sized error with no position
+
+## Problems with the evidence
+
+- The 'up to' figures are summaries of charts; per-input numbers are only in chart images and the saved baselines
+- Measured in 2021; no run on a current rustc was found, although std's validator is essentially unchanged
+- The compat API, which reports error positions like std, is slightly slower than the basic API
+
+## Evidence
+
+<details>
+<summary>6 quotes from the sources, checked 2026-10-28</summary>
+
+> x86-64: Up to 23 times faster than the std library on valid non-ASCII, up to four times faster on ASCII
+>
+> — [github.com/rusticstuff/simdutf8/blob/main/README.md](https://github.com/rusticstuff/simdutf8/blob/main/README.md)
+
+> aarch64: Up to eleven times faster than the std library on valid non-ASCII, up to four times faster on ASCII (Apple Silicon)
+>
+> — [github.com/rusticstuff/simdutf8/blob/main/README.md](https://github.com/rusticstuff/simdutf8/blob/main/README.md)
+
+> X86-64: PC with an AMD Ryzen 7 PRO 3700 CPU (Zen2) on Linux with Rust 1.52.0
+>
+> — [github.com/rusticstuff/simdutf8/blob/main/README.md](https://github.com/rusticstuff/simdutf8/blob/main/README.md)
+
+> Aarch64: Macbook Air with an Apple M1 CPU (Apple Silicon) on macOS with Rust rustc 1.54.0-nightly (881c1ac40 2021-05-08).
+>
+> — [github.com/rusticstuff/simdutf8/blob/main/README.md](https://github.com/rusticstuff/simdutf8/blob/main/README.md)
+
+> For inputs shorter than 64 bytes validation is delegated to `core::str::from_utf8()`
+>
+> — [github.com/rusticstuff/simdutf8/blob/main/README.md](https://github.com/rusticstuff/simdutf8/blob/main/README.md)
+
+> Rewrite UTF-8 validation in shift-based DFA
+>
+> — [github.com/rust-lang/rust/pull/136693](https://github.com/rust-lang/rust/pull/136693)
+
+</details>

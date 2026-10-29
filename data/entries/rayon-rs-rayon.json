@@ -1,0 +1,68 @@
+{
+  "id": "https://github.com/rayon-rs/rayon",
+  "name": "rayon (work-stealing data parallelism)",
+  "domain": "concurrency-and-runtime",
+  "category": "parallelism",
+  "baseline": "Sequential code on one thread; the catalog default (std::thread with hand-split work) was not measured",
+  "verdict": "downgrade",
+  "verdict_reason": "The authors' published numbers compare a 2015 Rayon quicksort with sequential code, not with hand-split std::thread work: 3.10x on 4 cores for large arrays, and 0.41x (slower) for 1K elements. No measurement of Rayon against manually chunked scoped threads was found, so its advantage over the default is load balancing and convenience rather than a measured speedup.",
+  "evidence_tier": "C",
+  "tier_reason": "First-party blog post from 2015 with the machine named loosely and no toolchain or flags.",
+  "claimed_speedup": "Quicksort on a 4-core Macbook Pro, Rayon vs sequential ('4x is basically the best you could expect'): 'a speedup of 3.10x' at 1024K elements without a sequential cutoff; '0.41x for a 1K array'.",
+  "workload": "Parallel quicksort using rayon::join on arrays from 1K to 1024K elements, with and without falling back to sequential sort below 5K elements.",
+  "metric": "time",
+  "hardware": "4-core MacBook Pro (model not stated)",
+  "os": "",
+  "toolchain": "",
+  "benchmark_date": "2015-12-18",
+  "benchmark_url": "https://smallcultfollowing.com/babysteps/blog/2015/12/18/rayon-data-parallelism-in-rust/",
+  "repo_url": "https://github.com/rayon-rs/rayon",
+  "docs_url": "https://docs.rs/rayon",
+  "license": "MIT OR Apache-2.0",
+  "usability": "copyable",
+  "language": "Rust",
+  "platforms": "All std targets with threads",
+  "install": "cargo add rayon",
+  "maintenance_status": "active",
+  "stars": 13404,
+  "last_commit": "2026-10-27",
+  "one_liner": "Work-stealing parallel iterators and join; its published speedups are against sequential code, not against hand-split std::thread.",
+  "how_it_is_fast": "rayon::join pushes one closure onto the current worker's deque and runs the other; idle workers steal pending halves, so work splits only when a core is free. A global pool is created once and reused, avoiding per-call thread spawns, and parallel iterators split ranges adaptively.",
+  "use_it_when": [
+    "Uneven per-item cost, where static chunking leaves threads idle",
+    "Many small parallel regions, where spawning threads each time costs more than reusing a pool",
+    "Recursive divide-and-conquer algorithms"
+  ],
+  "skip_it_when": [
+    "Tiny inputs: the 1K-element quicksort ran at 0.41x of sequential speed without a cutoff",
+    "Uniform work that splits evenly into one chunk per core, where hand-split scoped threads have no scheduler overhead"
+  ],
+  "caveats": [
+    "Numbers are from 2015, before Rayon 1.0, on 4 cores.",
+    "The baseline is sequential code; no published comparison against std::thread::scope with hand-split chunks was found.",
+    "A tuned version with a sequential cutoff reached about 4x in the post's table, which is HTML-only and not quoted here."
+  ],
+  "tradeoffs": [
+    "A global thread pool that other libraries may also use, which can oversubscribe cores when mixed with other pools.",
+    "Blocking inside Rayon tasks stalls workers."
+  ],
+  "evidence": [
+    {
+      "url": "https://smallcultfollowing.com/babysteps/blog/2015/12/18/rayon-data-parallelism-in-rust/",
+      "quote": "on my 4-core Macbook Pro (hence, 4x is basically the best you could expect)"
+    },
+    {
+      "url": "https://smallcultfollowing.com/babysteps/blog/2015/12/18/rayon-data-parallelism-in-rust/",
+      "quote": "If the array is 512K or 1024K"
+    },
+    {
+      "url": "https://smallcultfollowing.com/babysteps/blog/2015/12/18/rayon-data-parallelism-in-rust/",
+      "quote": "pushing, but we still get a speedup of 3.10x."
+    },
+    {
+      "url": "https://smallcultfollowing.com/babysteps/blog/2015/12/18/rayon-data-parallelism-in-rust/",
+      "quote": "Still, I would like to do better than 0.41x for a 1K array (and I think we can)."
+    }
+  ],
+  "checked": "2026-10-28"
+}

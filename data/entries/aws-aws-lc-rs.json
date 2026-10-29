@@ -1,0 +1,116 @@
+{
+  "id": "https://github.com/aws/aws-lc-rs",
+  "name": "aws-lc-rs (AWS-LC with a ring-compatible API)",
+  "domain": "crypto-and-hashing",
+  "category": "crypto-hashes-and-ciphers",
+  "baseline": "RustCrypto aes-gcm 0.11.1, p256 0.14.0, p384 0.14.0 and rsa 0.10.0-rc.19 on x86_64",
+  "verdict": "confirm",
+  "verdict_reason": "On the same independent benchmark (Ryzen 9 7940HS), aws-lc-rs encrypts AES-256-GCM at 9.48 GiB/s against 2.92 GiB/s for RustCrypto, signs RSA-2048 about 10.7x faster and ECDSA P-384 about 4.5x faster. It is first or second on every x86_64 row and well ahead of ring on P-384.",
+  "evidence_tier": "B",
+  "tier_reason": "Third-party benchmark by graviola's author with CPU and crate versions stated; rustc version and flags are not shown.",
+  "claimed_speedup": "AES-256-GCM 8 KB: 9.48 GiB/s vs 2.92 GiB/s (3.2x, derived from page data); RSA-2048 signing: 5,487.4 vs 514.3 sigs/sec (10.7x, derived from page data); ECDSA P-384 signing: 16,583 vs 3,656.4 sigs/sec (4.5x, derived from page data); P-384 key agreement: 7,359.1 vs 795.15 kx/sec",
+  "workload": "graviola's criterion suite: AES-256-GCM encryption of 8 KB buffers, RSA-2048 and ECDSA P-256/P-384 signing and verification, X25519/P-256/P-384 key agreement, ML-KEM-768.",
+  "metric": "throughput",
+  "hardware": "Framework 16 laptop with AMD Ryzen 9 7940HS; MacBook Pro M2 (2022)",
+  "os": "Linux on the x86_64 laptop; macOS on the M2",
+  "toolchain": "",
+  "benchmark_date": "",
+  "benchmark_url": "https://jbp.io/graviola/",
+  "repo_url": "https://github.com/aws/aws-lc-rs",
+  "docs_url": "https://docs.rs/aws-lc-rs",
+  "license": "ISC AND (Apache-2.0 OR ISC)",
+  "usability": "copyable",
+  "language": "Rust + C + assembly",
+  "platforms": "Linux, macOS, Windows and other targets AWS-LC supports; optional FIPS build",
+  "install": "cargo add aws-lc-rs",
+  "maintenance_status": "active",
+  "stars": 668,
+  "last_commit": "2026-10-28",
+  "one_liner": "Rust bindings to AWS-LC with ring's API: 3.2x RustCrypto's AES-GCM throughput and 10x its RSA-2048 signing rate on a Ryzen 9 7940HS.",
+  "how_it_is_fast": "AWS-LC is a BoringSSL fork with hand-written assembly for AES-GCM, RSA and the NIST curves; aws-lc-rs calls it through pre-generated FFI bindings. It carries AVX-512 code paths (the benchmark page marks its x86_64 AES-GCM and RSA signing results as using AVX-512) and much faster P-384 code than ring, which is where it pulls ahead of ring.",
+  "use_it_when": [
+    "rustls or other TLS stacks where handshake and AEAD cost matter",
+    "FIPS requirements (aws-lc-fips-sys)",
+    "P-384 or RSA-heavy workloads"
+  ],
+  "skip_it_when": [
+    "Pure-Rust or no-C-toolchain builds",
+    "Targets AWS-LC does not support"
+  ],
+  "caveats": [
+    "No run date or rustc version on the page (served Last-Modified 2026-10-27)",
+    "The page marks the x86_64 AES-GCM and RSA signing results as using AVX-512; CPUs without it will see smaller gaps",
+    "On the M2 run the RustCrypto AES-GCM figure (0.142 GiB/s vs 6.47 GiB/s) used aes-gcm 0.10.3, whose ARMv8 AES path needed opt-in flags, so that gap is overstated"
+  ],
+  "tradeoffs": [
+    "Needs a C/C++ compiler; FIPS builds also need CMake and Go",
+    "Large C dependency compiled into the binary"
+  ],
+  "evidence": [
+    {
+      "url": "https://jbp.io/graviola/",
+      "quote": "AES256-GCM encryption (8KB wide)"
+    },
+    {
+      "url": "https://jbp.io/graviola/",
+      "quote": "9.48 GiB/sec"
+    },
+    {
+      "url": "https://jbp.io/graviola/",
+      "quote": "2.92 GiB/sec"
+    },
+    {
+      "url": "https://jbp.io/graviola/",
+      "quote": "RSA2048 signing"
+    },
+    {
+      "url": "https://jbp.io/graviola/",
+      "quote": "5,487.4 sigs/sec"
+    },
+    {
+      "url": "https://jbp.io/graviola/",
+      "quote": "514.3 sigs/sec"
+    },
+    {
+      "url": "https://jbp.io/graviola/",
+      "quote": "16,583 sigs/sec"
+    },
+    {
+      "url": "https://jbp.io/graviola/",
+      "quote": "3,656.4 sigs/sec"
+    },
+    {
+      "url": "https://jbp.io/graviola/",
+      "quote": "7,359.1 kx/sec"
+    },
+    {
+      "url": "https://jbp.io/graviola/",
+      "quote": "795.15 kx/sec"
+    },
+    {
+      "url": "https://jbp.io/graviola/",
+      "quote": "6.47 GiB/sec"
+    },
+    {
+      "url": "https://jbp.io/graviola/",
+      "quote": "0.142 GiB/sec"
+    },
+    {
+      "url": "https://jbp.io/graviola/",
+      "quote": "Framework 16 with AMD Ryzen 9 7940HS CPU"
+    },
+    {
+      "url": "https://jbp.io/graviola/",
+      "quote": "aws-lc-rs version: aws-lc-rs 1.18.2, aws-lc-sys 0.46.0"
+    },
+    {
+      "url": "https://jbp.io/graviola/",
+      "quote": "rustcrypto version: aes-gcm 0.11.1, p256 0.14.0, p384 0.14.0, rsa 0.10.0-rc.19, sha2 0.11.1"
+    },
+    {
+      "url": "https://github.com/aws/aws-lc-rs/blob/main/aws-lc-rs/README.md",
+      "quote": "Consuming projects will need a C/C++ compiler to build."
+    }
+  ],
+  "checked": "2026-10-28"
+}

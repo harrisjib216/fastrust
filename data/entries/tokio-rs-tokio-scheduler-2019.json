@@ -1,0 +1,100 @@
+{
+  "id": "https://github.com/tokio-rs/tokio#scheduler-2019",
+  "name": "Tokio multi-threaded scheduler rewrite (2019)",
+  "domain": "concurrency-and-runtime",
+  "category": "async-runtimes",
+  "baseline": "Tokio's previous work-stealing thread pool (tokio-threadpool, the Tokio 0.1 scheduler)",
+  "verdict": "downgrade",
+  "verdict_reason": "The rewrite did make the scheduler faster and became the default multi-threaded runtime. The '10x' headline comes from one spawn microbenchmark (12x); the other microbenchmarks improved 1.4x to 2.3x, a Hyper hello-world server 34%, and Tonic about 10%.",
+  "evidence_tier": "C",
+  "tier_reason": "First-party blog post with benchmark output but no hardware, toolchain or build flags.",
+  "claimed_speedup": "'Some benchmarks saw a 10x speed up!' Microbenchmarks old to new: chained_spawn 2,019,796 to 168,854 ns/iter, ping_pong 1,279,948 to 562,659, spawn_many 10,283,608 to 7,320,737, yield_many 21,450,748 to 14,638,563 (12.0x, 2.3x, 1.4x and 1.5x, derived from page data). Hyper hello world: 113923.19 to 152258.70 requests/sec, 'an increase of 34%'; Tonic 'about a 10% speed up'.",
+  "workload": "Tokio scheduler microbenchmarks (recursive spawning, ping-pong messaging, spawning many tasks, frequent yields), plus a Hyper hello-world server under wrk -t1 -c50 -d10.",
+  "metric": "time",
+  "hardware": "",
+  "os": "",
+  "toolchain": "",
+  "benchmark_date": "2019-10-13",
+  "benchmark_url": "https://tokio.rs/blog/2019-10-scheduler",
+  "repo_url": "https://github.com/tokio-rs/tokio",
+  "docs_url": "https://docs.rs/tokio",
+  "license": "MIT",
+  "usability": "copyable",
+  "language": "Rust",
+  "platforms": "Linux, macOS, Windows and BSDs",
+  "install": "cargo add tokio --features full",
+  "maintenance_status": "active",
+  "stars": 33536,
+  "last_commit": "2026-10-28",
+  "one_liner": "Tokio's 2019 scheduler rewrite, the basis of its multi-threaded runtime since 0.2; 12x on one microbenchmark, 34% on a Hyper server.",
+  "how_it_is_fast": "Each worker owns a local run queue that idle workers steal from, and the number of workers searching for work at once is throttled so idle threads do not all contend. A task woken by a message goes into a 'next task' slot and runs next, while the message is still in cache. Task structures were reworked to cut allocations and atomic reference counting.",
+  "use_it_when": [
+    "The default for async Rust: the numbers describe the scheduler you already get from Tokio's multi-threaded runtime"
+  ],
+  "skip_it_when": [
+    "Comparing against runtimes benchmarked before late 2019, which measured the old scheduler"
+  ],
+  "caveats": [
+    "No hardware, OS or compiler flags stated.",
+    "The 10x figure is from a single microbenchmark; end-to-end gains were 10-34%.",
+    "Benchmarks are from 2019; the scheduler has changed again since (for example cooperative budgeting in 2020)."
+  ],
+  "tradeoffs": [
+    "Work stealing requires tasks to be Send, unlike thread-per-core runtimes."
+  ],
+  "evidence": [
+    {
+      "url": "https://tokio.rs/blog/2019-10-scheduler",
+      "quote": "Some benchmarks saw a 10x speed up!"
+    },
+    {
+      "url": "https://tokio.rs/blog/2019-10-scheduler",
+      "quote": "test chained_spawn ... bench: 2,019,796 ns/iter (+/- 302,168)"
+    },
+    {
+      "url": "https://tokio.rs/blog/2019-10-scheduler",
+      "quote": "test ping_pong ... bench: 1,279,948 ns/iter (+/- 154,365)"
+    },
+    {
+      "url": "https://tokio.rs/blog/2019-10-scheduler",
+      "quote": "test spawn_many ... bench: 10,283,608 ns/iter (+/- 1,284,275)"
+    },
+    {
+      "url": "https://tokio.rs/blog/2019-10-scheduler",
+      "quote": "test yield_many ... bench: 21,450,748 ns/iter (+/- 1,201,337)"
+    },
+    {
+      "url": "https://tokio.rs/blog/2019-10-scheduler",
+      "quote": "test chained_spawn ... bench: 168,854 ns/iter (+/- 8,339)"
+    },
+    {
+      "url": "https://tokio.rs/blog/2019-10-scheduler",
+      "quote": "test ping_pong ... bench: 562,659 ns/iter (+/- 34,410)"
+    },
+    {
+      "url": "https://tokio.rs/blog/2019-10-scheduler",
+      "quote": "test spawn_many ... bench: 7,320,737 ns/iter (+/- 264,620)"
+    },
+    {
+      "url": "https://tokio.rs/blog/2019-10-scheduler",
+      "quote": "test yield_many ... bench: 14,638,563 ns/iter (+/- 1,573,678)"
+    },
+    {
+      "url": "https://tokio.rs/blog/2019-10-scheduler",
+      "quote": "Requests/sec: 113923.19"
+    },
+    {
+      "url": "https://tokio.rs/blog/2019-10-scheduler",
+      "quote": "Requests/sec: 152258.70"
+    },
+    {
+      "url": "https://tokio.rs/blog/2019-10-scheduler",
+      "quote": "an increase of 34% requests per second just from switching schedulers!"
+    },
+    {
+      "url": "https://tokio.rs/blog/2019-10-scheduler",
+      "quote": "saw about a 10% speed up"
+    }
+  ],
+  "checked": "2026-10-28"
+}

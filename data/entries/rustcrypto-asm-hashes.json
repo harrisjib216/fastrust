@@ -1,0 +1,72 @@
+{
+  "id": "https://github.com/rustcrypto/asm-hashes",
+  "name": "RustCrypto asm-hashes (the sha2 'asm' feature)",
+  "domain": "crypto-and-hashing",
+  "category": "crypto-hashes-and-ciphers",
+  "baseline": "sha2's built-in backends: portable Rust plus SHA-NI and ARMv8 SHA2 intrinsics selected at runtime",
+  "verdict": "reject",
+  "verdict_reason": "The asm feature was removed in sha2 0.11.0 and the asm-hashes repository is archived. Its maintainers only ever described it as 'a bit faster' than the software backend, and sha2 already uses SHA-NI and ARMv8 SHA2 instructions at runtime, which is where large gains come from.",
+  "evidence_tier": "D",
+  "tier_reason": "No published numbers, only a maintainer's qualitative statement.",
+  "claimed_speedup": "No numbers published; the maintainers say the asm backends 'can be a bit faster than the software backends'.",
+  "workload": "Not measured",
+  "metric": "throughput",
+  "hardware": "",
+  "os": "",
+  "toolchain": "",
+  "benchmark_date": "",
+  "benchmark_url": "https://github.com/RustCrypto/hashes/pull/542",
+  "repo_url": "https://github.com/RustCrypto/asm-hashes",
+  "docs_url": "https://docs.rs/sha2-asm",
+  "license": "MIT",
+  "usability": "copyable",
+  "language": "Rust + assembly",
+  "platforms": "x86 and x86_64 Linux, ARM64; Windows x86_64 GNU only (MSVC builds known broken)",
+  "install": "sha2 0.10 with features = [\"asm\"] (removed in sha2 0.11)",
+  "maintenance_status": "abandoned",
+  "stars": 55,
+  "last_commit": "2024-05-07",
+  "one_liner": "Assembly SHA-1/SHA-2/MD5 compression functions for RustCrypto; archived and dropped from sha2 0.11 with no published speedup.",
+  "how_it_is_fast": "Hand-written assembly compression functions based on Project Nayuki's code, built with cc, replaced the portable Rust compression loop when the asm feature was enabled.",
+  "use_it_when": [
+    "Only if you are pinned to sha2 0.10 on a CPU without SHA extensions and have measured a gain yourself"
+  ],
+  "skip_it_when": [
+    "sha2 0.11 or later: the feature no longer exists",
+    "Windows MSVC: builds are known to be broken",
+    "CPUs with SHA-NI or ARMv8 SHA2, where sha2 already uses the hardware instructions"
+  ],
+  "caveats": [
+    "No benchmark numbers were found for the asm backends"
+  ],
+  "tradeoffs": [
+    "Depends on cc and a C toolchain, with limited cross-platform support per the maintainers"
+  ],
+  "evidence": [
+    {
+      "url": "https://github.com/RustCrypto/hashes/pull/542",
+      "quote": "The asm-hashes backends can be a bit faster than the software backends, but they are a maintenance headache"
+    },
+    {
+      "url": "https://github.com/RustCrypto/hashes/blob/master/sha2/CHANGELOG.md",
+      "quote": "## 0.11.0 (2026-03-25)"
+    },
+    {
+      "url": "https://github.com/RustCrypto/hashes/blob/master/sha2/CHANGELOG.md",
+      "quote": "- `asm`, `asm-aarch64`, `loongarch64_asm`, and `compress` crate features ([#542])"
+    },
+    {
+      "url": "https://github.com/RustCrypto/asm-hashes/blob/master/README.md",
+      "quote": "## NOTE: this repo is in maintenance mode only"
+    },
+    {
+      "url": "https://github.com/RustCrypto/asm-hashes/blob/master/README.md",
+      "quote": "Windows MSVC builds are known to be broken."
+    },
+    {
+      "url": "https://github.com/RustCrypto/hashes/blob/master/sha2/README.md",
+      "quote": "- `x86-sha`: uses the x86 SHA-NI extension."
+    }
+  ],
+  "checked": "2026-10-28"
+}

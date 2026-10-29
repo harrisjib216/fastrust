@@ -1,0 +1,79 @@
+{
+  "id": "https://github.com/kobzol/cargo-pgo",
+  "name": "cargo-pgo (profile-guided optimization)",
+  "domain": "tooling",
+  "category": "runtime-build-settings",
+  "baseline": "cargo build --release with no profile data",
+  "verdict": "confirm",
+  "verdict_reason": "PGO on a large Rust program has repeated, independent results: 10-16% shorter rustc build times in the rust-lang experiment, 10-20% for Windows rustc, and 13.2% on top of LTO in Google's Android toolchain. cargo-pgo drives the same rustc flags; the gain depends on how representative the training run is.",
+  "evidence_tier": "B",
+  "tier_reason": "The numbers come from the rust-lang project and Google applying PGO to rustc, not from cargo-pgo's author; cargo-pgo's README has no benchmarks.",
+  "claimed_speedup": "PGO-built rustc: 10-16% shorter build times on real-world crates (rust-lang experiment, Ryzen 1700X); Windows rustc: 10-20% (Rust 1.64.0); Android rustc: 13.2% faster than the LTO-only toolchain; Rust Performance Book: 10% or more",
+  "workload": "The Rust compiler as the optimized program, trained on and timed with real-world crate builds",
+  "metric": "time",
+  "hardware": "Ryzen 1700X (2020 rust-lang experiment)",
+  "os": "Linux, Windows",
+  "toolchain": "rustc -Cprofile-generate / -Cprofile-use with llvm-profdata",
+  "benchmark_date": "2023-12",
+  "benchmark_url": "https://blog.rust-lang.org/inside-rust/2020/11/11/exploring-pgo-for-the-rust-compiler/",
+  "repo_url": "https://github.com/kobzol/cargo-pgo",
+  "docs_url": "https://doc.rust-lang.org/rustc/profile-guided-optimization.html",
+  "license": "MIT",
+  "usability": "copyable",
+  "language": "Rust",
+  "platforms": "Targets where rustc supports PGO; needs llvm-profdata from the llvm-tools-preview component",
+  "install": "cargo install cargo-pgo; rustup component add llvm-tools-preview",
+  "maintenance_status": "active",
+  "stars": 793,
+  "last_commit": "2026-04-25",
+  "one_liner": "Cargo subcommand that automates profile-guided optimization; PGO made rustc itself 10-20% faster in several measurements.",
+  "how_it_is_fast": "PGO builds an instrumented binary, runs it on representative input to count how often each branch and function runs, then rebuilds with that profile. LLVM uses the counts to inline hot calls, place hot code together and order branches by likelihood, which cuts instruction-cache misses and branch mispredictions.",
+  "use_it_when": [
+    "Large, branchy programs (compilers, interpreters, servers, parsers) with a workload you can reproduce",
+    "Binaries you build and distribute yourself"
+  ],
+  "skip_it_when": [
+    "Crates installed with cargo install: the Rust Performance Book notes PGO is not supported there",
+    "Workloads that differ a lot from the training run"
+  ],
+  "caveats": [
+    "All quoted numbers are for rustc; other programs will differ",
+    "The 2020 numbers come from one machine",
+    "Profiles must be regenerated as code changes"
+  ],
+  "tradeoffs": [
+    "Two builds and a training run per release",
+    "Profile files to manage in CI"
+  ],
+  "evidence": [
+    {
+      "url": "https://blog.rust-lang.org/inside-rust/2020/11/11/exploring-pgo-for-the-rust-compiler/",
+      "quote": "As you can see we get a 10-16% reduction of build times almost across the board for real world test cases."
+    },
+    {
+      "url": "https://blog.rust-lang.org/inside-rust/2020/11/11/exploring-pgo-for-the-rust-compiler/",
+      "quote": "It's possible that the Ryzen 1700X processor I used has some idiosyncrasies that favor the kind of optimizations that PGO does"
+    },
+    {
+      "url": "https://github.com/rust-lang/rust/blob/main/RELEASES.md",
+      "quote": "Windows builds now use profile-guided optimization, providing 10-20% improvements to compiler performance:"
+    },
+    {
+      "url": "https://github.com/rust-lang/rust/blob/main/RELEASES.md",
+      "quote": "Version 1.64.0 (2022-09-22)"
+    },
+    {
+      "url": "https://android-developers.googleblog.com/2023/12/faster-rust-toolchains-for-android.html",
+      "quote": "As a result, the toolchain achieves a ~19.8% speedup and 5.3% reduction in size over the baseline compiler. This is a 13.2% speedup over the previous stage in the compiler."
+    },
+    {
+      "url": "https://nnethercote.github.io/perf-book/build-configuration.html",
+      "quote": "This can improve runtime speed by 10% or more."
+    },
+    {
+      "url": "https://nnethercote.github.io/perf-book/build-configuration.html",
+      "quote": "Unfortunately, PGO is not supported for binaries hosted on crates.io and distributed via"
+    }
+  ],
+  "checked": "2026-10-28"
+}

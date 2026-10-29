@@ -1,0 +1,133 @@
+{
+  "id": "https://github.com/tikv/jemallocator",
+  "name": "tikv-jemallocator (jemalloc global allocator)",
+  "domain": "concurrency-and-runtime",
+  "category": "allocators",
+  "baseline": "System allocator: macOS libmalloc (rustc builds), glibc 2.43 malloc, musl malloc",
+  "verdict": "downgrade",
+  "verdict_reason": "On macOS, rust-lang measured cargo and toml-rs builds 13-14% faster once rustc's jemalloc was actually wired in, and on musl it avoids the slow default allocator. On glibc the picture is mixed: jemalloc 5.3.0 was faster on lean and espresso but slower on redis and 3.5x slower on the cross-thread xmalloc test, and ripgrep's author found no meaningful difference for its workload.",
+  "evidence_tier": "B",
+  "tier_reason": "The rust-lang project measuring rustc with hyperfine, plus an independent mimalloc-bench run; the rustc numbers come from two runs per configuration.",
+  "claimed_speedup": "rustc with jemalloc on macOS: cargo build 66.658 s vs 75.251 s ('1.13 ± 0.01 times faster'), toml-rs build 5.968 s vs 6.777 s ('1.14 ± 0.01 times faster'). mimalloc-bench, jemalloc 5.3.0 vs glibc 2.43: leanN 0:07.78 vs 0:09.05 and espresso 0:02.97 vs 0:03.23 (faster); redis 0:2.619 vs 0:2.240 and xmalloc-testN 2.573 vs 0.739 (slower).",
+  "workload": "Building cargo and toml-rs from scratch with a nightly rustc whose allocator was or was not jemalloc (hyperfine, 2 runs each); mimalloc-bench allt suite on glibc.",
+  "metric": "time",
+  "hardware": "Intel Mac, model not stated (rustc); Intel Core i7-13800H (mimalloc-bench)",
+  "os": "macOS on x86_64-apple-darwin (rustc); Ubuntu 26.04 with glibc 2.43 (mimalloc-bench)",
+  "toolchain": "nightly-2021-03-08 vs the next nightly with PR #82642 (rustc); -march=native (mimalloc-bench)",
+  "benchmark_date": "2021-03-09",
+  "benchmark_url": "https://github.com/rust-lang/rust/pull/82642",
+  "repo_url": "https://github.com/tikv/jemallocator",
+  "docs_url": "https://docs.rs/tikv-jemallocator",
+  "license": "MIT/Apache-2.0",
+  "usability": "copyable",
+  "language": "Rust + C",
+  "platforms": "Linux (x86_64, aarch64, powerpc64le tested), macOS (aarch64 tested), musl; not Windows MSVC",
+  "install": "cargo add tikv-jemallocator",
+  "maintenance_status": "active",
+  "stars": 555,
+  "last_commit": "2026-10-10",
+  "one_liner": "Maintained jemalloc bindings that rustc itself uses; 13-14% faster rustc builds on macOS, mixed results against modern glibc.",
+  "how_it_is_fast": "Per-thread caches serve small allocations without locks, and memory is spread over several arenas to cut contention. The Rust wrapper passes the allocation size to sdallocx on free, which skips a metadata lookup that plain free() needs.",
+  "use_it_when": [
+    "Static musl builds (ripgrep switches to it on musl for this reason)",
+    "macOS programs whose allocation is heavy, as with rustc",
+    "Long-running services that need jemalloc's heap profiling and statistics"
+  ],
+  "skip_it_when": [
+    "glibc Linux programs that are not allocation-bound: ripgrep saw no meaningful difference",
+    "Producer-consumer patterns that free on another thread, where jemalloc 5.3.0 trailed glibc on xmalloc-test",
+    "Windows MSVC targets"
+  ],
+  "caveats": [
+    "The macOS numbers are two runs each on one unnamed Intel Mac, measuring rustc rather than a typical Rust program.",
+    "In 2021 rustc linked jemalloc through the jemalloc-sys crate; it switched to tikv-jemalloc-sys later.",
+    "mimalloc-bench runs C programs built with -march=native, not Rust."
+  ],
+  "tradeoffs": [
+    "Longer build: jemalloc is compiled from C source; ripgrep's author notes it increases compile times.",
+    "Different memory profile: in mimalloc-bench redis peaked at 8156 KB vs glibc's 6324 KB."
+  ],
+  "evidence": [
+    {
+      "url": "https://github.com/rust-lang/rust/pull/82642",
+      "quote": "I did some basic benchmarks, and it looks like this had a fairly significant improvement!"
+    },
+    {
+      "url": "https://github.com/rust-lang/rust/pull/82642",
+      "quote": "Time (mean ± σ): 66.658 s ± 0.394 s [User: 299.565 s, System: 27.624 s]"
+    },
+    {
+      "url": "https://github.com/rust-lang/rust/pull/82642",
+      "quote": "Time (mean ± σ): 75.251 s ± 0.283 s [User: 337.470 s, System: 28.521 s]"
+    },
+    {
+      "url": "https://github.com/rust-lang/rust/pull/82642",
+      "quote": "1.13 ± 0.01 times faster than"
+    },
+    {
+      "url": "https://github.com/rust-lang/rust/pull/82642",
+      "quote": "Time (mean ± σ): 5.968 s ± 0.010 s [User: 7.561 s, System: 0.493 s]"
+    },
+    {
+      "url": "https://github.com/rust-lang/rust/pull/82642",
+      "quote": "Time (mean ± σ): 6.777 s ± 0.049 s [User: 8.598 s, System: 0.509 s]"
+    },
+    {
+      "url": "https://github.com/rust-lang/rust/pull/82642",
+      "quote": "1.14 ± 0.01 times faster than"
+    },
+    {
+      "url": "https://github.com/rust-lang/rust/pull/82642",
+      "quote": "nightly-2021-03-08-x86_64-apple-darwin"
+    },
+    {
+      "url": "https://github.com/mjansson/rpmalloc/blob/a6033ae33ffc816db07eebce5b5efc9e1f55ba2f/BENCHMARKS.md",
+      "quote": "Ubuntu 26.04, glibc 2.43"
+    },
+    {
+      "url": "https://github.com/mjansson/rpmalloc/blob/a6033ae33ffc816db07eebce5b5efc9e1f55ba2f/BENCHMARKS.md",
+      "quote": "| je | jemalloc | 5.3.0 |"
+    },
+    {
+      "url": "https://github.com/mjansson/rpmalloc/blob/a6033ae33ffc816db07eebce5b5efc9e1f55ba2f/benchmark/results/mimalloc-bench-allt.csv",
+      "quote": "leanN je 0:07.78 214556 18.36 0.39 0 63225"
+    },
+    {
+      "url": "https://github.com/mjansson/rpmalloc/blob/a6033ae33ffc816db07eebce5b5efc9e1f55ba2f/benchmark/results/mimalloc-bench-allt.csv",
+      "quote": "leanN sys 0:09.05 242464 21.03 0.52 0 60874"
+    },
+    {
+      "url": "https://github.com/mjansson/rpmalloc/blob/a6033ae33ffc816db07eebce5b5efc9e1f55ba2f/benchmark/results/mimalloc-bench-allt.csv",
+      "quote": "espresso je 0:02.97 5856 2.96 0.01 0 982"
+    },
+    {
+      "url": "https://github.com/mjansson/rpmalloc/blob/a6033ae33ffc816db07eebce5b5efc9e1f55ba2f/benchmark/results/mimalloc-bench-allt.csv",
+      "quote": "espresso sys 0:03.23 5672 3.22 0.00 42 1003"
+    },
+    {
+      "url": "https://github.com/mjansson/rpmalloc/blob/a6033ae33ffc816db07eebce5b5efc9e1f55ba2f/benchmark/results/mimalloc-bench-allt.csv",
+      "quote": "redis je 0:2.619 8156 0.11 0.02 0 1774"
+    },
+    {
+      "url": "https://github.com/mjansson/rpmalloc/blob/a6033ae33ffc816db07eebce5b5efc9e1f55ba2f/benchmark/results/mimalloc-bench-allt.csv",
+      "quote": "redis sys 0:2.240 6324 0.09 0.02 0 1610"
+    },
+    {
+      "url": "https://github.com/mjansson/rpmalloc/blob/a6033ae33ffc816db07eebce5b5efc9e1f55ba2f/benchmark/results/mimalloc-bench-allt.csv",
+      "quote": "xmalloc-testN je 2.573 104768 93.98 0.64 73 56706"
+    },
+    {
+      "url": "https://github.com/mjansson/rpmalloc/blob/a6033ae33ffc816db07eebce5b5efc9e1f55ba2f/benchmark/results/mimalloc-bench-allt.csv",
+      "quote": "xmalloc-testN sys 0.739 59672 56.99 35.66 5 503986"
+    },
+    {
+      "url": "https://github.com/BurntSushi/ripgrep/blob/master/crates/core/main.rs",
+      "quote": "difference (for ripgrep's purposes) between glibc's allocator and jemalloc."
+    },
+    {
+      "url": "https://github.com/BurntSushi/ripgrep/blob/master/crates/core/main.rs",
+      "quote": "allocator, which appears to be substantially worse."
+    }
+  ],
+  "checked": "2026-10-28"
+}

@@ -1,0 +1,81 @@
+{
+  "id": "https://github.com/jonhoo/evmap",
+  "name": "evmap (left-right eventually consistent map)",
+  "domain": "collections",
+  "category": "concurrent-maps",
+  "baseline": "RwLock<HashMap> (parking_lot RwLock around std HashMap in the measurements)",
+  "verdict": "downgrade",
+  "verdict_reason": "With many readers, evmap reads scale past a single-lock map (about 5.5x at 12 threads on an M2 Max). When every write is published immediately it is the slowest map tested on an insert/remove-heavy mix, below RwLock<HashMap>, and on one thread it is slower too. The win needs read-mostly access and writers that batch refreshes.",
+  "evidence_tier": "A",
+  "tier_reason": "Independent results (leapfrog's fork of conc-map-bench) with public code, CPU, OS and flags stated; evmap's own numbers are charts it calls outdated.",
+  "claimed_speedup": "Read-heavy, Apple M2 Max: 18.7 vs 3.4 Mops/s at 12 threads (about 5.5x, derived from page data), 13.5 vs 21.2 at 1 thread. Exchange mix with SipHash on Ryzen 9 3950X: 701044.6231179577 ops/s at 16 threads vs 1331625.593635424 for RwLock<HashMap> at 8 threads.",
+  "workload": "bustle harness with u64 keys: read-heavy (98% reads) and exchange (40% insert, 40% remove); the adapter takes a Mutex on the write handle and refreshes after every write.",
+  "metric": "throughput (operations per second)",
+  "hardware": "Apple M2 Max (12 cores); AMD Ryzen 9 3950X (16 cores)",
+  "os": "Ubuntu 20.04 (3950X)",
+  "toolchain": "nightly Rust (2022), lto = true, codegen-units = 1; evmap 10.0.2",
+  "benchmark_date": "2023-06",
+  "benchmark_url": "https://github.com/robclu/leapfrog/blob/main/README.md",
+  "repo_url": "https://github.com/jonhoo/evmap",
+  "docs_url": "https://docs.rs/evmap",
+  "license": "MIT OR Apache-2.0",
+  "usability": "copyable",
+  "language": "Rust",
+  "platforms": "All targets with std",
+  "install": "cargo add evmap",
+  "maintenance_status": "active",
+  "stars": 580,
+  "last_commit": "2026-08-02",
+  "one_liner": "Eventually consistent multi-value map built on left-right; lock-free reads that scale, at the cost of slow, batched writes.",
+  "how_it_is_fast": "evmap keeps two copies of the map. Readers read one copy with no locks; the single writer applies changes to the other copy and swaps them on refresh, then replays the operation log. Reads never contend with the writer, but each write is applied twice.",
+  "use_it_when": [
+    "Read-mostly maps (configuration, routing, caches) where readers can tolerate seeing writes only after the writer refreshes.",
+    "Writers can batch many changes per refresh."
+  ],
+  "skip_it_when": [
+    "Writes are frequent and must be visible immediately: refreshing per write made it the slowest map on the exchange mix.",
+    "Memory is tight: it stores two copies of the data plus a per-key Vec for multiple values.",
+    "Multiple concurrent writers: writes need a Mutex around the single write handle."
+  ],
+  "caveats": [
+    "The bustle adapter refreshes after every write, evmap's documented worst case.",
+    "Measured evmap 10.0.2; the current release is 11.0.0.",
+    "Baseline was parking_lot's RwLock, measured before std's RwLock moved to futexes on Linux in Rust 1.62.",
+    "No RwLock<HashMap> result at 16 threads was recorded for the exchange mix; the comparison uses its 8-thread figure."
+  ],
+  "tradeoffs": [
+    "Eventual consistency: readers see only what preceded the last refresh.",
+    "Double memory and double write work."
+  ],
+  "evidence": [
+    {
+      "url": "https://github.com/robclu/leapfrog/blob/main/README.md",
+      "quote": "| Evmap            | 13.5           | 0.64         | 18.7            | 0.88          |"
+    },
+    {
+      "url": "https://github.com/robclu/leapfrog/blob/main/README.md",
+      "quote": "| RwLock + HashMap | 21.2           | 1.0          | 3.4             | 0.16          |"
+    },
+    {
+      "url": "https://github.com/robclu/conc-map-bench/blob/master/results/Exchange.std.csv",
+      "quote": "Evmap,8388608,16,11965868824,701044.6231179577,22823"
+    },
+    {
+      "url": "https://github.com/robclu/conc-map-bench/blob/master/results/Exchange.std.csv",
+      "quote": "RwLock<StdHashMap>,8388608,8,6299524461,1331625.593635424,6007"
+    },
+    {
+      "url": "https://github.com/jonhoo/evmap/blob/main/README.md",
+      "quote": "This benchmark represents the worst-case usage of"
+    },
+    {
+      "url": "https://github.com/robclu/leapfrog/blob/main/README.md",
+      "quote": "| Map              | Throughput (1) | Relative (1) | Throughput (12) | Relative (12) |"
+    },
+    {
+      "url": "https://github.com/robclu/leapfrog/blob/main/README.md",
+      "quote": "A snapshot of the results for the LeapMap on a read heavy workload using a 16 core AMD 3950x CPU"
+    }
+  ],
+  "checked": "2026-10-28"
+}

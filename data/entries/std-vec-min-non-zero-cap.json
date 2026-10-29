@@ -1,0 +1,59 @@
+{
+  "id": "std:vec#min-non-zero-cap",
+  "name": "std Vec growth skips capacities 1 and 2 (Rust 1.45)",
+  "domain": "collections",
+  "category": "small-vectors-and-strings",
+  "baseline": "Vec before Rust 1.45, whose push growth went 0, 1, 2, 4, 8",
+  "verdict": "confirm",
+  "verdict_reason": "Measured on the compiler itself, starting pushed Vecs at capacity 4 (8 for 1-byte elements) cut rustc's allocations by 10% or more and sped up many rustc-perf benchmarks by up to 4%. Part of what small-vector crates were used for, avoiding the first few reallocations, is now the default.",
+  "evidence_tier": "B",
+  "tier_reason": "The rust-lang project measuring a std change on its rustc-perf suite, reported in the PR and the author's follow-up post; no per-benchmark table in text.",
+  "claimed_speedup": "Allocations done by rustc reduced by 10% or more; many rustc-perf benchmarks up to 4% faster.",
+  "workload": "The Rust compiler compiling the rustc-perf benchmark crates.",
+  "metric": "allocation count; compile time",
+  "hardware": "rust-lang perf server",
+  "os": "",
+  "toolchain": "rustc nightly, May 2020",
+  "benchmark_date": "2020-05",
+  "benchmark_url": "https://github.com/rust-lang/rust/pull/72227",
+  "repo_url": null,
+  "docs_url": "https://doc.rust-lang.org/std/vec/struct.Vec.html",
+  "license": "MIT OR Apache-2.0",
+  "usability": "platform",
+  "language": "Rust",
+  "platforms": "All targets",
+  "install": "built into std since 1.45",
+  "maintenance_status": "active",
+  "stars": null,
+  "last_commit": "",
+  "one_liner": "Since Rust 1.45, a Vec grown by push starts at capacity 4 (8 for bytes) instead of 1, removing two reallocations for small Vecs.",
+  "how_it_is_fast": "The amortized growth path now jumps from 0 straight to a minimum non-zero capacity (8 for 1-byte elements, 4 for elements up to 1 KiB, 1 above that). Short Vecs built by push do one allocation instead of three, which matters in allocation-heavy code such as the compiler.",
+  "use_it_when": [
+    "Always: it is the default Vec behavior. Before reaching for SmallVec or ArrayVec, check whether reallocation or the one remaining allocation is the cost."
+  ],
+  "skip_it_when": [
+    "You need zero heap allocations for small collections: a single allocation remains, which inline-storage crates avoid."
+  ],
+  "caveats": [
+    "Numbers are aggregate figures from the compiler's own workloads; no microbenchmark of Vec itself was published.",
+    "reserve_exact and with_capacity are unaffected and can still give capacity 1 or 2."
+  ],
+  "tradeoffs": [
+    "Small Vecs may hold up to 3 unused slots; the PR author found no memory increase in practice."
+  ],
+  "evidence": [
+    {
+      "url": "https://github.com/rust-lang/rust/pull/72227",
+      "quote": "This change reduces the number of allocations done by rustc itself by 10% or more."
+    },
+    {
+      "url": "https://github.com/rust-lang/rust/pull/72227",
+      "quote": "the capacity growth sequence is 0, 1, 2, 4, 8, 16, etc."
+    },
+    {
+      "url": "https://blog.mozilla.org/nnethercote/2020/08/05/how-to-speed-up-the-rust-compiler-some-more-in-2020/",
+      "quote": "sped up many benchmarks by up to 4%"
+    }
+  ],
+  "checked": "2026-10-28"
+}

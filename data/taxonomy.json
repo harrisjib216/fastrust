@@ -1,0 +1,49 @@
+[
+  {"slug": "data-formats", "title": "Data formats", "categories": [
+    {"slug": "json", "title": "JSON", "default": "serde_json"},
+    {"slug": "binary-serialization", "title": "Binary serialization", "default": "bincode through serde, or serde_json as the wire or disk format"},
+    {"slug": "base64-and-encoding", "title": "Base64, hex and encoding", "default": "The base64 and hex crates"},
+    {"slug": "numbers-to-and-from-text", "title": "Numbers to and from text", "default": "std's Display/format! and str::parse"},
+    {"slug": "parsers-and-csv", "title": "Parsers and CSV", "default": "The csv crate, nom, and hand-written str::split parsing"}]},
+  {"slug": "collections", "title": "Collections", "categories": [
+    {"slug": "hashers", "title": "Hashers for maps and sets", "default": "std HashMap's RandomState (SipHash-1-3)"},
+    {"slug": "maps-and-sets", "title": "Maps and sets", "default": "std HashMap, HashSet and BTreeMap"},
+    {"slug": "small-vectors-and-strings", "title": "Small vectors and strings", "default": "Vec and String"},
+    {"slug": "sorting-and-searching", "title": "Sorting and searching", "default": "slice::sort, sort_unstable and binary_search"},
+    {"slug": "concurrent-maps", "title": "Concurrent maps", "default": "Mutex<HashMap> or RwLock<HashMap>"}]},
+  {"slug": "concurrency-and-runtime", "title": "Concurrency and runtime", "categories": [
+    {"slug": "locks", "title": "Locks", "default": "std::sync::Mutex and RwLock"},
+    {"slug": "channels", "title": "Channels", "default": "std::sync::mpsc"},
+    {"slug": "async-runtimes", "title": "Async runtimes", "default": "Tokio's multi-threaded runtime"},
+    {"slug": "parallelism", "title": "Data parallelism", "default": "std::thread with hand-split work"},
+    {"slug": "lazy-and-once", "title": "Lazy statics and one-time init", "default": "lazy_static"},
+    {"slug": "allocators", "title": "Memory allocators", "default": "The system allocator (glibc malloc, musl malloc, or the macOS allocator)"}]},
+  {"slug": "text-processing", "title": "Text processing", "categories": [
+    {"slug": "regex", "title": "Regular expressions", "default": "The regex crate"},
+    {"slug": "string-search", "title": "String and byte search", "default": "str::find, contains and split"},
+    {"slug": "utf8-and-unicode", "title": "UTF-8 and Unicode", "default": "std::str::from_utf8 and char iteration"}]},
+  {"slug": "crypto-and-hashing", "title": "Crypto and hashing", "categories": [
+    {"slug": "crypto-hashes-and-ciphers", "title": "Cryptographic hashes and ciphers", "default": "The RustCrypto crates (sha2, aes-gcm and friends)"},
+    {"slug": "checksums-and-fast-hashes", "title": "Checksums and fast hashes", "default": "crc32 and std's DefaultHasher"},
+    {"slug": "random-numbers", "title": "Random numbers", "default": "rand's thread_rng and StdRng"}]},
+  {"slug": "compression", "title": "Compression", "categories": [
+    {"slug": "deflate-and-gzip", "title": "Deflate, zlib and gzip", "default": "flate2 with its default miniz_oxide backend"},
+    {"slug": "other-codecs", "title": "Zstandard, LZ4, Snappy and Brotli", "default": "flate2, or the C library bindings"}]},
+  {"slug": "storage", "title": "Storage", "categories": [
+    {"slug": "embedded-databases", "title": "Embedded databases", "default": "SQLite through rusqlite, and RocksDB bindings"},
+    {"slug": "sql-drivers", "title": "SQL drivers and ORMs", "default": "sqlx and Diesel"},
+    {"slug": "caches", "title": "In-memory caches", "default": "A HashMap with hand-written eviction, or the lru crate"}]},
+  {"slug": "server-and-networking", "title": "Server and networking", "categories": [
+    {"slug": "web-frameworks", "title": "Web frameworks", "default": "axum on hyper and Tokio"},
+    {"slug": "http-clients", "title": "HTTP clients", "default": "reqwest"},
+    {"slug": "protobuf-and-rpc", "title": "Protocol Buffers and RPC", "default": "prost and tonic"}]},
+  {"slug": "numerics-and-media", "title": "Numerics and media", "categories": [
+    {"slug": "linear-algebra", "title": "Linear algebra", "default": "nalgebra and ndarray"},
+    {"slug": "simd", "title": "SIMD", "default": "Scalar loops left to LLVM's auto-vectorizer"},
+    {"slug": "images", "title": "Images", "default": "The image crate"}]},
+  {"slug": "tooling", "title": "Build and tooling", "categories": [
+    {"slug": "linkers", "title": "Linkers", "default": "The platform's default linker (GNU ld or BFD through cc on Linux, ld64 on macOS, link.exe on Windows)"},
+    {"slug": "compile-times", "title": "Compile times", "default": "cargo build with the LLVM backend and default profile settings"},
+    {"slug": "runtime-build-settings", "title": "Build settings for faster binaries", "default": "cargo build --release with default profile settings"},
+    {"slug": "test-runners-and-caching", "title": "Test runners and build caching", "default": "cargo test, and no shared build cache"}]}
+]

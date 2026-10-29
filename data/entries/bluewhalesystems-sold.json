@@ -1,0 +1,56 @@
+{
+  "id": "https://github.com/bluewhalesystems/sold",
+  "name": "sold (mold fork for macOS)",
+  "domain": "tooling",
+  "category": "linkers",
+  "baseline": "Apple's default macOS linker called through cc: ld-prime with Xcode 15 or later, ld64 before that",
+  "verdict": "reject",
+  "verdict_reason": "The author archived sold in November 2024 and now recommends Apple's new linker in Xcode 15 or later instead. Bevy's build guide says it is about the same speed as the default macOS linker. No published numbers show a gain over today's default.",
+  "evidence_tier": "D",
+  "tier_reason": "No benchmark numbers were ever published; only the author's and Bevy's statements.",
+  "claimed_speedup": "No published numbers. The README called it a high-performance macOS linker; Bevy reports it is about the same speed as the default linker",
+  "workload": "None published: linking on macOS, compared only in prose",
+  "metric": "time (link)",
+  "hardware": "",
+  "os": "macOS",
+  "toolchain": "",
+  "benchmark_date": "",
+  "benchmark_url": "https://github.com/bluewhalesystems/sold/blob/main/README.md",
+  "repo_url": "https://github.com/bluewhalesystems/sold",
+  "docs_url": null,
+  "license": "MIT",
+  "usability": "copyable",
+  "language": "C++",
+  "platforms": "macOS and iOS (Mach-O) plus Linux (ELF, same as mold)",
+  "install": "Build from source; the repository is archived",
+  "maintenance_status": "abandoned",
+  "stars": 526,
+  "last_commit": "2024-11-25",
+  "one_liner": "Archived macOS fork of mold; its author now points users to Apple's Xcode 15+ linker, which is already the default.",
+  "how_it_is_fast": "sold carried mold's parallel linker design over to Mach-O at a time when Apple's ld64 was slow. Apple has since shipped a new, faster linker (ld-prime) with Xcode 15, which removed the reason for sold to exist.",
+  "use_it_when": [
+    "None for new work: on Xcode 15 or later the default linker is the author's own recommendation"
+  ],
+  "skip_it_when": [
+    "Any macOS build with Xcode 15 or later",
+    "Any project that needs a maintained linker: the repository is archived"
+  ],
+  "caveats": [
+    "The README never published benchmark numbers",
+    "Bevy's comparison gives no figures"
+  ],
+  "tradeoffs": [
+    "Unmaintained: no fixes for new Xcode or macOS releases"
+  ],
+  "evidence": [
+    {
+      "url": "https://github.com/bluewhalesystems/sold/blob/main/README.md",
+      "quote": "is a high-performance linker for macOS. I built it because Apple's ld was too slow at the time, and I wasn't aware that they were developing a new linker. Xcode 15 or later are shipped with Apple's new faster linker. I recommend using that instead."
+    },
+    {
+      "url": "https://github.com/bevyengine/bevy/blob/main/.cargo/config_fast_builds.toml",
+      "quote": "There is a fork of Mold named Sold that supports macOS, but it is unmaintained and is about the same speed as # the default ld64 linker."
+    }
+  ],
+  "checked": "2026-10-28"
+}

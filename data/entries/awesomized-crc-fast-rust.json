@@ -1,0 +1,79 @@
+{
+  "id": "https://github.com/awesomized/crc-fast-rust",
+  "name": "crc-fast (SIMD CRC-16/32/64 for all catalogued variants)",
+  "domain": "crypto-and-hashing",
+  "category": "checksums-and-fast-hashes",
+  "baseline": "crc crate 3.x with its default bytewise table (about 0.5 GiB/s)",
+  "verdict": "downgrade",
+  "verdict_reason": "The '>220X' headline pairs the best row (about 111 GiB/s for CRC-32/ISCSI on 1 MiB inputs with AVX-512 VPCLMULQDQ on Sapphire Rapids) with the crc crate's default bytewise table measured elsewhere. On 1 KiB inputs the same machine shows about 61 GiB/s, Graviton2 reaches about 17 GiB/s at 1 MiB, and crc's own Slice16 option does 3.30 GiB/s, so against a tuned software CRC the gain is roughly 5x to 34x (derived from page data), not 220x.",
+  "evidence_tier": "C",
+  "tier_reason": "CPU and SIMD target are stated per row, but the 220x comparison uses a crc figure from another machine, values are rounded, and no rustc version or command is given.",
+  "claimed_speedup": "Up to >220X faster than the crc crate at ~0.5GiB/s; CRC-32/ISCSI ~111 GiB/s (1 MiB) and ~61 GiB/s (1 KiB) on Sapphire Rapids with avx512-vpclmulqdq; CRC-32/ISO-HDLC ~88 GiB/s (1 MiB); Graviton2 ~17 GiB/s (1 MiB); crc's Slice16 is 3.30 GiB/s on a Ryzen 7 3800X.",
+  "workload": "CRC-32/ISCSI, CRC-32/ISO-HDLC, CRC-64/NVME and forward variants over 1 KiB and 1 MiB buffers.",
+  "metric": "throughput",
+  "hardware": "Intel Sapphire Rapids (EC2 c7i.metal-24xl), AMD Genoa (EC2 c7a.metal-48xl), AWS Graviton4 and Graviton2, Apple M3 Ultra, Apple M4 Max",
+  "os": "",
+  "toolchain": "",
+  "benchmark_date": "",
+  "benchmark_url": "https://github.com/awesomized/crc-fast-rust/blob/main/README.md",
+  "repo_url": "https://github.com/awesomized/crc-fast-rust",
+  "docs_url": "https://docs.rs/crc-fast",
+  "license": "MIT OR Apache-2.0",
+  "usability": "copyable",
+  "language": "Rust",
+  "platforms": "aarch64, x86_64 and x86 SIMD; table-based fallback elsewhere; C-compatible library",
+  "install": "cargo add crc-fast",
+  "maintenance_status": "active",
+  "stars": 95,
+  "last_commit": "2025-12-27",
+  "one_liner": "SIMD CRC for every CRC-16/32/64 variant, reaching ~111 GiB/s on AVX-512 servers; the '>220X' headline compares against crc's slowest default.",
+  "how_it_is_fast": "It generalizes Intel's PCLMULQDQ folding method to any Rocksoft-model polynomial, folding 1 MiB inputs with VPCLMULQDQ on 512-bit registers or PMULL on ARM. For CRC-32/ISCSI and, on aarch64, CRC-32/ISO-HDLC it fuses carry-less multiply folding with the CPU's native CRC instructions.",
+  "use_it_when": [
+    "CRC-64/NVME (S3 checksums), CRC-32C or uncommon CRC variants that crc32fast does not cover",
+    "Large buffers on AVX-512 VPCLMULQDQ servers or recent ARM cores"
+  ],
+  "skip_it_when": [
+    "Toolchains older than 1.89 (crate MSRV)",
+    "Small inputs where call overhead dominates"
+  ],
+  "caveats": [
+    "Throughput values are rounded approximations (~)",
+    "x86 rows are all AVX-512 VPCLMULQDQ server CPUs; older x86 without VPCLMULQDQ is not shown",
+    "No head-to-head with crc32fast or crc32c on the same machine"
+  ],
+  "tradeoffs": [
+    "MSRV 1.89",
+    "unsafe SIMD intrinsics"
+  ],
+  "evidence": [
+    {
+      "url": "https://github.com/awesomized/crc-fast-rust/blob/main/README.md",
+      "quote": "is ~0.5GiB/s by default, so this is"
+    },
+    {
+      "url": "https://github.com/awesomized/crc-fast-rust/blob/main/README.md",
+      "quote": "up to >220X faster"
+    },
+    {
+      "url": "https://github.com/awesomized/crc-fast-rust/blob/main/README.md",
+      "quote": "| x86_64  | Intel | Sapphire Rapids | EC2 c7i.metal-24xl        | avx512-vpclmulqdq |          ~61 |         ~111 |"
+    },
+    {
+      "url": "https://github.com/awesomized/crc-fast-rust/blob/main/README.md",
+      "quote": "| x86_64  | Intel | Sapphire Rapids | EC2 c7i.metal-248xl       | avx512-vpclmulqdq |          ~28 |          ~88 |"
+    },
+    {
+      "url": "https://github.com/awesomized/crc-fast-rust/blob/main/README.md",
+      "quote": "| aarch64 | AWS   | Graviton2       | EC2 c6g.metal             | neon-pmull        |          ~11 |          ~17 |"
+    },
+    {
+      "url": "https://github.com/mrhooray/crc-rs/blob/master/README.md",
+      "quote": "| 32    | 0.111   | 0.516    | 3.30    |"
+    },
+    {
+      "url": "https://github.com/mrhooray/crc-rs/blob/master/README.md",
+      "quote": "with AMD Ryzen 7 3800X"
+    }
+  ],
+  "checked": "2026-10-28"
+}

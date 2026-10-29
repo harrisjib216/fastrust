@@ -1,0 +1,138 @@
+{
+  "id": "https://github.com/purpleprotocol/mimalloc_rust",
+  "name": "mimalloc (global allocator)",
+  "domain": "concurrency-and-runtime",
+  "category": "allocators",
+  "baseline": "System allocator: musl's malloc in static musl builds; glibc 2.43 malloc on Linux",
+  "verdict": "confirm",
+  "verdict_reason": "On musl the gain is large: an independent test found a static musl wasmtime build 25x faster on 48 cores once musl's malloc was swapped for mimalloc, and slightly faster than the glibc build. On glibc it still wins most real programs in a 2026 mimalloc-bench run, by 4% to 54%, and the allocator stress tests by up to 5x; a few programs show no difference.",
+  "evidence_tier": "A",
+  "tier_reason": "A third-party mimalloc-bench run with public scripts and raw CSV, CPU, OS, glibc version and -march=native stated, backed by an independent wasmtime test.",
+  "claimed_speedup": "Static musl wasmtime, compiling and running a 26MiB module on 48 logical cores: musl malloc 93.07 s, mimalloc 3.734 s, glibc build 4.311 s (25x faster than musl, 1.15x faster than glibc, derived from page data). mimalloc-bench, mimalloc 3.3.2 vs glibc 2.43: espresso 0:02.89 vs 0:03.23, leanN 0:07.83 vs 0:09.05, lua 00.71 vs 01.09, redis 0:2.139 vs 0:2.240, sh8benchN 00.24 vs 01.19.",
+  "workload": "wasmtime run --disable-cache on a 26MiB hello.wasm with parallel JIT compilation (Tweag); mimalloc-bench allt suite of real programs (espresso, lean, lua, redis, rocksdb, ghostscript) and multithreaded allocator stress tests (rpmalloc author's run).",
+  "metric": "time",
+  "hardware": "48-logical-core server with 128 GiB (Tweag); Intel Core i7-13800H, 14 cores / 20 threads (mimalloc-bench)",
+  "os": "Linux (Tweag, distro not stated); Ubuntu 26.04 with glibc 2.43 (mimalloc-bench)",
+  "toolchain": "Rust targeting x86_64-unknown-linux-musl with mimalloc linked into libc.a (Tweag); C benchmarks and allocators built with -march=native (mimalloc-bench)",
+  "benchmark_date": "2023-08-10",
+  "benchmark_url": "https://www.tweag.io/blog/2023-08-10-rust-static-link-with-mimalloc/",
+  "repo_url": "https://github.com/purpleprotocol/mimalloc_rust",
+  "docs_url": "https://docs.rs/mimalloc",
+  "license": "MIT",
+  "usability": "copyable",
+  "language": "Rust + C",
+  "platforms": "Linux (glibc and musl), macOS, Windows and BSDs; needs a C compiler at build time",
+  "install": "cargo add mimalloc",
+  "maintenance_status": "active",
+  "stars": 838,
+  "last_commit": "2026-06-30",
+  "one_liner": "Rust global allocator for Microsoft's mimalloc: 25x faster than musl's malloc in a 48-core test, 4-54% faster than glibc on most real programs.",
+  "how_it_is_fast": "Each thread allocates from its own heap of size-segregated pages, each page keeping its own free list, so the common path needs no locks or atomics. Frees from other threads go to a separate per-page list that the owner collects later. musl's allocator, by contrast, serializes threads on a shared lock, which is where most of its slowdown comes from.",
+  "use_it_when": [
+    "Any static musl binary (Alpine, distroless, scratch images) with more than one thread",
+    "Allocation-heavy multithreaded programs on glibc",
+    "Short-lived processes that allocate many small objects"
+  ],
+  "skip_it_when": [
+    "Memory-constrained deployments where peak RSS matters more than speed: rust-lang declined it for rustc over a 6-35% max-RSS increase",
+    "Programs that spend little time in the allocator (rocksdb and cfrac showed no gain on glibc)"
+  ],
+  "caveats": [
+    "Tweag replaced malloc inside musl's libc.a, covering C and Rust allocations; the crate's #[global_allocator] only routes Rust allocations.",
+    "mimalloc-bench measures C and C++ programs, not Rust; the allocator code is the same but Rust's allocation patterns differ.",
+    "mimalloc-bench builds used -march=native on one laptop CPU.",
+    "nickb.dev measured musl 7x slower than glibc in a real Rust program and reported that swapping the allocator fixed it, without a mimalloc number."
+  ],
+  "tradeoffs": [
+    "Higher peak memory on some workloads: in rust-lang's rustc experiment (mimalloc 1.7 era) max-RSS rose 6-35%, and in mimalloc-bench lua used 80340 KB vs glibc's 66628 KB.",
+    "Adds a C build dependency.",
+    "Secure mode costs about 10% according to the crate README."
+  ],
+  "evidence": [
+    {
+      "url": "https://www.tweag.io/blog/2023-08-10-rust-static-link-with-mimalloc/",
+      "quote": "This module is around 26MiB in size"
+    },
+    {
+      "url": "https://www.tweag.io/blog/2023-08-10-rust-static-link-with-mimalloc/",
+      "quote": "The test is performed on a server with 48 logical cores and 128GiB memory."
+    },
+    {
+      "url": "https://www.tweag.io/blog/2023-08-10-rust-static-link-with-mimalloc/",
+      "quote": "time 4.311 s (4.106 s .. 4.714 s)"
+    },
+    {
+      "url": "https://www.tweag.io/blog/2023-08-10-rust-static-link-with-mimalloc/",
+      "quote": "time 93.07 s (91.75 s .. 93.74 s)"
+    },
+    {
+      "url": "https://www.tweag.io/blog/2023-08-10-rust-static-link-with-mimalloc/",
+      "quote": "time 3.734 s (3.537 s .. 3.878 s)"
+    },
+    {
+      "url": "https://www.tweag.io/blog/2023-08-10-rust-static-link-with-mimalloc/",
+      "quote": "even faster than the build that links against glibc!"
+    },
+    {
+      "url": "https://github.com/mjansson/rpmalloc/blob/a6033ae33ffc816db07eebce5b5efc9e1f55ba2f/BENCHMARKS.md",
+      "quote": "Ubuntu 26.04, glibc 2.43"
+    },
+    {
+      "url": "https://github.com/mjansson/rpmalloc/blob/a6033ae33ffc816db07eebce5b5efc9e1f55ba2f/BENCHMARKS.md",
+      "quote": "allocators and benchmarks built with `-march=native`"
+    },
+    {
+      "url": "https://github.com/mjansson/rpmalloc/blob/a6033ae33ffc816db07eebce5b5efc9e1f55ba2f/BENCHMARKS.md",
+      "quote": "| mi, mi2, mi3 | mimalloc | 1.8.2, 2.1.2, 3.3.2 |"
+    },
+    {
+      "url": "https://github.com/mjansson/rpmalloc/blob/a6033ae33ffc816db07eebce5b5efc9e1f55ba2f/benchmark/results/mimalloc-bench-allt.csv",
+      "quote": "espresso mi3 0:02.89 5720 2.87 0.01 0 1762"
+    },
+    {
+      "url": "https://github.com/mjansson/rpmalloc/blob/a6033ae33ffc816db07eebce5b5efc9e1f55ba2f/benchmark/results/mimalloc-bench-allt.csv",
+      "quote": "espresso sys 0:03.23 5672 3.22 0.00 42 1003"
+    },
+    {
+      "url": "https://github.com/mjansson/rpmalloc/blob/a6033ae33ffc816db07eebce5b5efc9e1f55ba2f/benchmark/results/mimalloc-bench-allt.csv",
+      "quote": "leanN mi3 0:07.83 213636 18.53 0.39 0 56701"
+    },
+    {
+      "url": "https://github.com/mjansson/rpmalloc/blob/a6033ae33ffc816db07eebce5b5efc9e1f55ba2f/benchmark/results/mimalloc-bench-allt.csv",
+      "quote": "leanN sys 0:09.05 242464 21.03 0.52 0 60874"
+    },
+    {
+      "url": "https://github.com/mjansson/rpmalloc/blob/a6033ae33ffc816db07eebce5b5efc9e1f55ba2f/benchmark/results/mimalloc-bench-allt.csv",
+      "quote": "lua mi3 00.71 80340 5.12 0.44 115 181834"
+    },
+    {
+      "url": "https://github.com/mjansson/rpmalloc/blob/a6033ae33ffc816db07eebce5b5efc9e1f55ba2f/benchmark/results/mimalloc-bench-allt.csv",
+      "quote": "lua sys 01.09 66628 5.11 0.61 17964 180175"
+    },
+    {
+      "url": "https://github.com/mjansson/rpmalloc/blob/a6033ae33ffc816db07eebce5b5efc9e1f55ba2f/benchmark/results/mimalloc-bench-allt.csv",
+      "quote": "redis mi3 0:2.139 6396 0.09 0.01 0 1609"
+    },
+    {
+      "url": "https://github.com/mjansson/rpmalloc/blob/a6033ae33ffc816db07eebce5b5efc9e1f55ba2f/benchmark/results/mimalloc-bench-allt.csv",
+      "quote": "redis sys 0:2.240 6324 0.09 0.02 0 1610"
+    },
+    {
+      "url": "https://github.com/mjansson/rpmalloc/blob/a6033ae33ffc816db07eebce5b5efc9e1f55ba2f/benchmark/results/mimalloc-bench-allt.csv",
+      "quote": "sh8benchN mi3 00.24 161132 3.62 0.05 0 40874"
+    },
+    {
+      "url": "https://github.com/mjansson/rpmalloc/blob/a6033ae33ffc816db07eebce5b5efc9e1f55ba2f/benchmark/results/mimalloc-bench-allt.csv",
+      "quote": "sh8benchN sys 01.19 347336 19.30 0.65 4 88687"
+    },
+    {
+      "url": "https://nickb.dev/blog/default-musl-allocator-considered-harmful-to-performance/",
+      "quote": "In a real world benchmark, the default musl allocator caused a 7x slowdown compared to other allocators."
+    },
+    {
+      "url": "https://github.com/rust-lang/rust/pull/92249",
+      "quote": "a ~6-35% max-rss regression for the instruction count wins from adopting this PR"
+    }
+  ],
+  "checked": "2026-10-28"
+}

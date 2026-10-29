@@ -1,0 +1,65 @@
+{
+  "id": "https://github.com/orlp/glidesort",
+  "name": "glidesort (stable hybrid merge/quick sort)",
+  "domain": "collections",
+  "category": "sorting-and-searching",
+  "baseline": "slice::sort and sort_unstable as of rustc 1.69 nightly (before driftsort and ipnsort)",
+  "verdict": "downgrade",
+  "verdict_reason": "glidesort's published lead was measured against the pre-1.81 std sorts, and its own numbers are a chart image. std's driftsort (1.81) applies the same ideas; the driftsort writeup finds the two close on most patterns, with glidesort ahead only on some partially sorted and low-cardinality inputs, at about 5x driftsort's binary size.",
+  "evidence_tier": "D",
+  "tier_reason": "First-party results are only in a chart image; the only text numbers are binary-size figures from the driftsort writeup.",
+  "claimed_speedup": "Chart only (Apple M1, u64, rustc 1.69.0-nightly). Binary size per u64 instantiation: 25520 bytes for glidesort vs 5294 for driftsort and 2335 for the previous std slice::sort; about 13x the old sort, against about 2.5x for driftsort.",
+  "workload": "Sorting u64 slices across input distributions (chart); binary size of one instantiation (writeup).",
+  "metric": "time (chart); binary size",
+  "hardware": "Apple M1 (2021)",
+  "os": "",
+  "toolchain": "rustc 1.69.0-nightly (11d96b593), --release --features unstable, lto = \"thin\"",
+  "benchmark_date": "2023-02",
+  "benchmark_url": "https://github.com/orlp/glidesort",
+  "repo_url": "https://github.com/orlp/glidesort",
+  "docs_url": "https://docs.rs/glidesort",
+  "license": "MIT OR Apache-2.0",
+  "usability": "copyable",
+  "language": "Rust",
+  "platforms": "All Rust targets",
+  "install": "cargo add glidesort",
+  "maintenance_status": "abandoned",
+  "stars": 1659,
+  "last_commit": "2023-02-06",
+  "one_liner": "Stable sort mixing powersort run merging with stable quicksort; its ideas now ship in std's driftsort, which narrows the gap.",
+  "how_it_is_fast": "glidesort scans for sorted runs like powersort but defers sorting unsorted stretches, merging logical runs and sorting them with a branchless stable quicksort only when needed. It interleaves several merges for memory- and instruction-level parallelism.",
+  "use_it_when": [
+    "You are pinned to a Rust toolchain older than 1.81 and need a faster stable sort.",
+    "You need sorting with a caller-provided buffer (sort_with_buffer) or bounded auxiliary memory."
+  ],
+  "skip_it_when": [
+    "On Rust 1.81 or later for general use: std's slice::sort is close on most patterns and much smaller.",
+    "Binary size or compile time matters."
+  ],
+  "caveats": [
+    "First-party benchmark exists only as a chart image, against std sorts that have since been replaced.",
+    "No commits since February 2023."
+  ],
+  "tradeoffs": [
+    "Large code size per instantiation (25520 bytes for u64 in release) and longer compile times, per the driftsort writeup."
+  ],
+  "evidence": [
+    {
+      "url": "https://github.com/orlp/glidesort/blob/master/README.md",
+      "quote": "Compiled with `rustc 1.69.0-nightly (11d96b593)` using `--release --features unstable` and `lto = \"thin\"`."
+    },
+    {
+      "url": "https://github.com/Voultapher/sort-research-rs/blob/main/writeup/driftsort_introduction/text.md",
+      "quote": "driftsort is similar in terms of effective capabilities to glidesort while only requiring ~2.5x the binary-size in contrast to ~13x for glidesort."
+    },
+    {
+      "url": "https://github.com/Voultapher/sort-research-rs/blob/main/writeup/driftsort_introduction/text.md",
+      "quote": "release                      | `u64`    | 2335                 | 25520                  | 5294"
+    },
+    {
+      "url": "https://github.com/Voultapher/sort-research-rs/blob/main/writeup/driftsort_introduction/text.md",
+      "quote": "random_p5 sees the only major difference between driftsort and glidesort at this input length."
+    }
+  ],
+  "checked": "2026-10-28"
+}

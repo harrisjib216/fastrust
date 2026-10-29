@@ -1,0 +1,109 @@
+# rkyv (zero-copy deserialization)
+
+<sub>[fastrust](../../../README.md) › [Catalog](../../README.md) › [Data formats](../README.md) › [Binary serialization](README.md)</sub>
+
+**Tier A** (reproducible public benchmark) · ✅ Holds up · Open source · `Rust` · `MIT` · 🟢 active
+
+> Zero-copy archive format: reads data in place in nanoseconds instead of deserializing, and serializes plain-data arrays 35x faster than bincode 1.3.
+
+| | |
+|---|---|
+| **Beats** | bincode 1.3.3 through serde (full deserialize into owned types) |
+| **Claimed result** | Access log archive: 1.0914 ns unvalidated, 292.13 µs validated, vs bincode 1.3.3 deserialize 1.6158 ms. mesh: serialize 140.04 µs vs 4.8569 ms (34.7x), deserialize 144.93 µs vs 3.6395 ms (25x). log deserialize 1.2328 ms unvalidated / 1.5322 ms validated vs 1.6158 ms (1.31x / 1.05x). minecraft_savedata validated deserialize 1.5649 ms vs 1.5229 ms (slower) (ratios derived from page data) |
+| **Workload** | rust_serialization_benchmark log, mesh and minecraft_savedata datasets; serialize, full deserialize to owned types, and zero-copy access/read of the archived form, unvalidated and validated upfront. |
+| **Metric** | time |
+| **Hardware** | AMD EPYC 9V74 (GitHub Actions runner) |
+| **OS** | Linux (x86_64-unknown-linux-gnu) |
+| **Toolchain** | rustc 1.99.0-nightly (2026-08-06), bench profile lto = true, no target-cpu flag |
+| **Measured** | 2026-08-07 |
+| **Adoption** | 4.4k stars |
+| **Last commit** | 2026-09-25 |
+| **Platforms** | portable; no_std supported |
+| **Install** | cargo add rkyv |
+| **Links** | [repository](https://github.com/rkyv/rkyv) · [documentation](https://docs.rs/rkyv) · [benchmark](https://github.com/djkoloski/rust_serialization_benchmark/blob/60c1cd50564fb6e62cc4928e53933d258de724d8/README.md) |
+
+## Verdict
+
+Zero-copy access holds: rkyv opens the log archive in about 1 ns unvalidated (292.13 µs validated) where bincode 1.3.3 needs 1.6158 ms to deserialize, and on plain-data mesh it serializes 34.7x and deserializes 25x faster. A full validated deserialize of string-heavy data is only 1.05x faster on log and slightly slower on minecraft_savedata.
+
+**Why tier A:** Third-party benchmark with public code; rustc nightly, the CPU and lto = true are stated.
+
+## Use it when
+
+- Reading a few fields from large archives (memory-mapped files, caches) without materializing them
+- Plain-data-heavy payloads such as meshes or numeric arrays
+- Trusted data where unvalidated access is acceptable
+
+## Skip it when
+
+- You always deserialize everything into owned types from untrusted input: the validated path was only 1.05x faster than bincode on log and slower on minecraft_savedata
+- You need the archived types to be your normal types; rkyv works with Archived* mirrors
+- Running versions before 0.8.17 on untrusted archives (see advisories)
+
+## How it is fast
+
+Writes data in a layout that can be used where it lies: archived types use relative pointers, so reading a field is a cast plus offset arithmetic, not decoding. Validation is a separate upfront pass that can be skipped for trusted bytes. Plain-old-data such as float arrays is copied as-is.
+
+## What it costs
+
+- Unvalidated access is unsafe
+- RUSTSEC-2026-0233, 0234 and 0235 (2026-05): crafted archives could pass validation and cause out-of-bounds reads or use-after-free; fixed in 0.8.17
+- Archives are not self-describing and are tied to the Rust type layout
+- MSRV 1.81
+
+## Problems with the evidence
+
+- bincode was dropped from the benchmark in 2026-08, so the comparison is from the 2026-08-07 run
+- Unvalidated access numbers assume trusted input; validated access is five orders of magnitude slower on log
+- Shared cloud runner, single run
+
+## Evidence
+
+<details>
+<summary>11 quotes from the sources, checked 2026-10-28</summary>
+
+> rkyv (<em>archive</em>) is a zero-copy deserialization framework for Rust
+>
+> — [github.com/rkyv/rkyv](https://github.com/rkyv/rkyv)
+
+> | [bincode 1.3.3][bincode1] | 464.75 µs | 1.6158 ms | 495.21 µs | 1045784 | 373127 | 311553 | 3.6551 ms |
+>
+> — [github.com/djkoloski/rust_serialization_benchmark/blob/60c1cd50564f…](https://github.com/djkoloski/rust_serialization_benchmark/blob/60c1cd50564fb6e62cc4928e53933d258de724d8/README.md)
+
+> | [rkyv 0.8.18][rkyv] | 179.32 µs | <span title="unvalidated">*1.2328 ms\**</span> <span title="validated upfront with error">*1.5322 ms\**</span> | † | 1011488 | 393526 | 325965 | 3.3651 ms |
+>
+> — [github.com/djkoloski/rust_serialization_benchmark/blob/60c1cd50564f…](https://github.com/djkoloski/rust_serialization_benchmark/blob/60c1cd50564fb6e62cc4928e53933d258de724d8/README.md)
+
+> | [rkyv 0.8.18][rkyv] | <span title="unvalidated">*1.0914 ns\**</span> <span title="validated upfront with error">*292.13 µs\**</span> |
+>
+> — [github.com/djkoloski/rust_serialization_benchmark/blob/60c1cd50564f…](https://github.com/djkoloski/rust_serialization_benchmark/blob/60c1cd50564fb6e62cc4928e53933d258de724d8/README.md)
+
+> | [bincode 1.3.3][bincode1] | 4.8569 ms | 3.6395 ms | 6000008 | 5378500 | 5346908 | 7.2277 ms |
+>
+> — [github.com/djkoloski/rust_serialization_benchmark/blob/60c1cd50564f…](https://github.com/djkoloski/rust_serialization_benchmark/blob/60c1cd50564fb6e62cc4928e53933d258de724d8/README.md)
+
+> | [rkyv 0.8.18][rkyv] | 140.04 µs | <span title="unvalidated">*144.93 µs\**</span> <span title="validated upfront with error">*145.02 µs\**</span> | 6000008 | 5378500 | 5346872 | 7.3544 ms |
+>
+> — [github.com/djkoloski/rust_serialization_benchmark/blob/60c1cd50564f…](https://github.com/djkoloski/rust_serialization_benchmark/blob/60c1cd50564fb6e62cc4928e53933d258de724d8/README.md)
+
+> | [bincode 1.3.3][bincode1] | 518.86 µs | 1.5229 ms | 721.15 µs | 569975 | 240525 | 231884 | 1.8242 ms |
+>
+> — [github.com/djkoloski/rust_serialization_benchmark/blob/60c1cd50564f…](https://github.com/djkoloski/rust_serialization_benchmark/blob/60c1cd50564fb6e62cc4928e53933d258de724d8/README.md)
+
+> | [rkyv 0.8.18][rkyv] | 214.92 µs | <span title="unvalidated">*1.2562 ms\**</span> <span title="validated upfront with error">*1.5649 ms\**</span> | † | 603776 | 254776 | 219421 | 1.7003 ms |
+>
+> — [github.com/djkoloski/rust_serialization_benchmark/blob/60c1cd50564f…](https://github.com/djkoloski/rust_serialization_benchmark/blob/60c1cd50564fb6e62cc4928e53933d258de724d8/README.md)
+
+> rustc 1.99.0-nightly (84b36a78a 2026-08-06)
+>
+> — [github.com/djkoloski/rust_serialization_benchmark/blob/60c1cd50564f…](https://github.com/djkoloski/rust_serialization_benchmark/blob/60c1cd50564fb6e62cc4928e53933d258de724d8/README.md)
+
+> Model name: AMD EPYC 9V74 80-Core Processor
+>
+> — [github.com/djkoloski/rust_serialization_benchmark/blob/60c1cd50564f…](https://github.com/djkoloski/rust_serialization_benchmark/blob/60c1cd50564fb6e62cc4928e53933d258de724d8/README.md)
+
+> Crafted archives can cause a use-after-free during deserialization
+>
+> — [github.com/rustsec/advisory-db/blob/main/crates/rkyv/RUSTSEC-2026-0…](https://github.com/rustsec/advisory-db/blob/main/crates/rkyv/RUSTSEC-2026-0233.md)
+
+</details>

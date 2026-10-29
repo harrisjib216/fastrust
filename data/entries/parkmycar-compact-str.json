@@ -1,0 +1,62 @@
+{
+  "id": "https://github.com/parkmycar/compact_str",
+  "name": "compact_str (CompactString, 24-byte inline string)",
+  "domain": "collections",
+  "category": "small-vectors-and-strings",
+  "baseline": "String for short strings",
+  "verdict": "downgrade",
+  "verdict_reason": "The memory property is certain: strings up to 24 bytes are stored inline in a type the size of String, so they need no allocation. The README's claim that this makes it more performant has no published numbers, and the third-party comparison it points to shows results only as charts.",
+  "evidence_tier": "D",
+  "tier_reason": "No benchmark numbers in text from the project; the referenced string-rosetta-rs results are chart images only.",
+  "claimed_speedup": "No numbers published in text. Stores up to 24 bytes inline in a value the same size as String.",
+  "workload": "string-rosetta-rs: creating, cloning, accessing and comparing strings of varying length (charts only).",
+  "metric": "memory; time (charts only)",
+  "hardware": "",
+  "os": "",
+  "toolchain": "",
+  "benchmark_date": "2026-03-09",
+  "benchmark_url": "https://github.com/rosetta-rs/string-rosetta-rs",
+  "repo_url": "https://github.com/ParkMyCar/compact_str",
+  "docs_url": "https://docs.rs/compact_str",
+  "license": "MIT",
+  "usability": "copyable",
+  "language": "Rust",
+  "platforms": "All Rust targets (12-byte inline limit on 32-bit); no_std",
+  "install": "cargo add compact_str",
+  "maintenance_status": "active",
+  "stars": 877,
+  "last_commit": "2026-07-13",
+  "one_liner": "Mutable String replacement that stores strings up to 24 bytes inline in the same 24 bytes; avoids allocations for short strings.",
+  "how_it_is_fast": "The last byte of the 24-byte value doubles as a discriminant and length, so up to 24 bytes of text fit inline with no heap pointer. Short-string creation and clone copy with two overlapping fixed-width loads and stores instead of calling memcpy, and accesses use branchless selection between inline and heap layouts.",
+  "use_it_when": [
+    "Parsing or deserializing many short strings that you may later mutate.",
+    "Option<CompactString> fields where the niche keeps the size at 24 bytes."
+  ],
+  "skip_it_when": [
+    "Strings are cloned far more than created: clone is O(n); an O(1)-clone type such as ecow or arcstr fits better.",
+    "Profiling has not shown string allocation as a cost: the rosetta-rs maintainers suggest String by default."
+  ],
+  "caveats": [
+    "Speed claims are unquantified in text; string-rosetta-rs results (run 2026-03-09) are SVG charts.",
+    "string-rosetta-rs notes one competitor (smartstring) was skipped in the access benchmark for being slow, which shows inline-string designs differ a lot; measure before switching."
+  ],
+  "tradeoffs": [
+    "Uses unsafe code (tested with miri, proptest and fuzzing per string-rosetta-rs).",
+    "Heap strings grow by 1.5x rather than 2x, which can mean more reallocations for strings built by repeated pushes."
+  ],
+  "evidence": [
+    {
+      "url": "https://github.com/ParkMyCar/compact_str/blob/main/compact_str/README.md",
+      "quote": "Stores up to 24 bytes on the stack"
+    },
+    {
+      "url": "https://github.com/ParkMyCar/compact_str/blob/main/compact_str/README.md",
+      "quote": "don't have to heap allocate so it's more performant."
+    },
+    {
+      "url": "https://github.com/rosetta-rs/string-rosetta-rs/blob/master/README.md",
+      "quote": "*(`smartstring` is skipped due to how slow it is)*"
+    }
+  ],
+  "checked": "2026-10-28"
+}

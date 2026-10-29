@@ -1,0 +1,82 @@
+{
+  "id": "https://github.com/brurucy/indexset",
+  "name": "indexset (two-level order-statistic B-tree)",
+  "domain": "collections",
+  "category": "maps-and-sets",
+  "baseline": "std::collections::BTreeSet and BTreeMap",
+  "verdict": "downgrade",
+  "verdict_reason": "In the author's own table, indexset traverses 1.5x to 2.5x faster than std's B-tree and adds positional lookups std lacks, but std is faster on point lookups and about 2x faster on removals, and inserts are mixed. It wins for scan-heavy or rank/select workloads, not as a general replacement.",
+  "evidence_tier": "A",
+  "tier_reason": "Public cargo bench targets, Criterion medians from a pinned commit, with CPU, OS and rustc version stated; first-party but reports std's wins in bold.",
+  "claimed_speedup": "Full traversal of 100,000 u64: 92.5 µs for BTreeSet vs 37.3 µs (about 2.5x, derived from page data); 128-entry range traversal 164.8 vs 117.3 ns. Std is faster on contains hit (21.8 vs 23.6 ns), map get hit (24.7 vs 38.7 ns) and remove hit (69.6 vs 133.1 ns).",
+  "workload": "Sets of 100,000 u64 or 64-byte records and maps of 100,000 16- or 64-byte entries: insert, contains/get, remove, positional get_index, full traversal and 128-entry range traversal.",
+  "metric": "time (Criterion median)",
+  "hardware": "Apple M2 Pro (12 cores, 16 GB RAM)",
+  "os": "macOS 26.5.2",
+  "toolchain": "rustc 1.97.0-nightly (ad3a598ca 2026-05-03)",
+  "benchmark_date": "2026-08-26",
+  "benchmark_url": "https://github.com/brurucy/indexset/blob/master/README.md",
+  "repo_url": "https://github.com/brurucy/indexset",
+  "docs_url": "https://docs.rs/indexset",
+  "license": "Apache-2.0 OR MIT",
+  "usability": "copyable",
+  "language": "Rust",
+  "platforms": "All Rust targets; concurrent variant behind the concurrent feature",
+  "install": "cargo add indexset",
+  "maintenance_status": "active",
+  "stars": 120,
+  "last_commit": "2026-08-27",
+  "one_liner": "Ordered set and map built from fixed-capacity Vec leaves; faster scans and rank lookups than std's BTreeMap, slower point lookups and removals.",
+  "how_it_is_fast": "The tree has two levels: leaves are Vecs of fixed capacity (1024 by default) and a Fenwick tree indexes them. Iteration walks contiguous Vecs with no pointer chasing, and a lookup is two binary searches. The Fenwick tree gives near-constant-time positional lookup and rank.",
+  "use_it_when": [
+    "Ordered collections that are mostly iterated or range-scanned.",
+    "You need lookup by sorted position (get_index) or rank, which std's B-tree does not offer."
+  ],
+  "skip_it_when": [
+    "Point lookups and removals dominate: std's BTreeMap was faster on both.",
+    "Values are large and you keep the default 1024 capacity: inserting 64-byte records took 564.3 ns vs 230.0 ns for std."
+  ],
+  "caveats": [
+    "First-party numbers from one machine on a nightly compiler.",
+    "Results swing with the leaf capacity setting (256 vs 1024)."
+  ],
+  "tradeoffs": [
+    "Insertion is O(B) best case and O(B^2) worst case in leaf capacity B.",
+    "Removals cost about twice std's."
+  ],
+  "evidence": [
+    {
+      "url": "https://github.com/brurucy/indexset/blob/master/README.md",
+      "quote": "| Full traversal | `u64` (8 B) | 92.5 µs | 37.5 µs | **37.3 µs** |"
+    },
+    {
+      "url": "https://github.com/brurucy/indexset/blob/master/README.md",
+      "quote": "| 128-entry range traversal | `u64` (8 B) | 164.8 ns | 127.4 ns | **117.3 ns** |"
+    },
+    {
+      "url": "https://github.com/brurucy/indexset/blob/master/README.md",
+      "quote": "| `contains` hit | `u64` (8 B) | **21.8 ns** | 23.9 ns | 23.6 ns |"
+    },
+    {
+      "url": "https://github.com/brurucy/indexset/blob/master/README.md",
+      "quote": "| `get` hit | `entry_16b` (16 B) | **24.7 ns** | 46.5 ns | 38.7 ns |"
+    },
+    {
+      "url": "https://github.com/brurucy/indexset/blob/master/README.md",
+      "quote": "| Remove hit | `u64` (8 B) | **69.6 ns** | 133.1 ns | 163.1 ns |"
+    },
+    {
+      "url": "https://github.com/brurucy/indexset/blob/master/README.md",
+      "quote": "| | `record_64b` (64 B) | **230.0 ns** | 264.3 ns | 564.3 ns |"
+    },
+    {
+      "url": "https://github.com/brurucy/indexset/blob/master/README.md",
+      "quote": "start with 100,000 existing values"
+    },
+    {
+      "url": "https://github.com/brurucy/indexset/blob/master/README.md",
+      "quote": "2026-08-26 on a 12-core Apple M2 Pro with 16 GB RAM, macOS 26.5.2, and"
+    }
+  ],
+  "checked": "2026-10-28"
+}

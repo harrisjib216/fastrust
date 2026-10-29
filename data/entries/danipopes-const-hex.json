@@ -1,0 +1,130 @@
+{
+  "id": "https://github.com/danipopes/const-hex",
+  "name": "const-hex",
+  "domain": "data-formats",
+  "category": "base64-and-encoding",
+  "baseline": "hex 0.4.3 encode/decode, and std formatting with write!(f, \"{byte:02x}\") per byte",
+  "verdict": "confirm",
+  "verdict_reason": "Its own run backs the claim: encode 14x-99x and decode 6x-59x faster than hex across 32 B-1 MiB, and formatting 37x faster than per-byte std formatting at 32 bytes, rising above 100x from 256 bytes. The to_slice variants, where hex avoids allocation, show smaller 7.7x-16x encode gaps.",
+  "evidence_tier": "A",
+  "tier_reason": "Public cargo bench code with the CPU and rustc nightly stated; first-party.",
+  "claimed_speedup": "encode 7.06 vs 102.11 ns (32 B) to 30,716.17 vs 3,048,496.30 ns (1 MiB), 14x-99x; decode 17.57 vs 107.13 ns to 108,937.41 vs 6,409,293.90 ns, 6.1x-59x; encode_to_slice 1.57 vs 12.11 ns to 32,631.90 vs 518,929.65 ns, 7.7x-16x; format vs std 10.01 vs 373.63 ns (32 B), 26.68 vs 2,885.37 ns (256 B), 78,056.40 vs 12,348,138.40 ns (1 MiB) (ratios derived from page data)",
+  "workload": "libtest #[bench] on 32 B, 256 B, 2 KiB, 16 KiB, 128 KiB and 1 MiB inputs: allocating encode/decode, encode/decode into slices, and Display formatting into a Vec.",
+  "metric": "time",
+  "hardware": "AMD Ryzen 9 7950X",
+  "os": "Linux (x86_64-unknown-linux-gnu)",
+  "toolchain": "rustc 1.83.0-nightly (9ff5fc4ff 2024-10-03), cargo bench",
+  "benchmark_date": "2024-10-06",
+  "benchmark_url": "https://github.com/DaniPopes/const-hex/blob/7d78addb8fb7a7abbf88010b74e7158487847015/README.md",
+  "repo_url": "https://github.com/DaniPopes/const-hex",
+  "docs_url": "https://docs.rs/const-hex",
+  "license": "MIT OR Apache-2.0",
+  "usability": "copyable",
+  "language": "Rust",
+  "platforms": "x86/x86_64 (SIMD routines adapted from faster-hex) and other platforms; const fn encoding at compile time",
+  "install": "cargo add const-hex",
+  "maintenance_status": "active",
+  "stars": 66,
+  "last_commit": "2026-10-28",
+  "one_liner": "Drop-in replacement for the hex crate with SIMD and const-eval, measured 6x-99x faster than hex and up to 158x faster than std formatting.",
+  "how_it_is_fast": "Adapts faster-hex's x86 check and decode routines and has its own code paths for other platforms. A const-generic Buffer, modeled on itoa's, formats into a fixed-size stack buffer, avoiding the per-byte Formatter calls that make std formatting slow.",
+  "use_it_when": [
+    "Replacing hex 0.4 without changing call sites",
+    "Formatting byte arrays as hex in Display/Debug impls (hashes, addresses) instead of write!(f, \"{:02x}\") per byte",
+    "Hex constants decoded at compile time"
+  ],
+  "skip_it_when": [
+    "Tiny inputs written into a preallocated slice, where the gap over hex is closer to 7x-8x and may not matter"
+  ],
+  "caveats": [
+    "First-party numbers on one machine with a nightly toolchain",
+    "The std comparison is per-byte write!(\"{:02x}\"), the slowest common idiom, not a hand-written std loop"
+  ],
+  "tradeoffs": [
+    "SIMD paths use unsafe",
+    "MSRV 1.64 for the released 1.19.3; the main branch raised it to 1.85"
+  ],
+  "evidence": [
+    {
+      "url": "https://github.com/DaniPopes/const-hex/blob/7d78addb8fb7a7abbf88010b74e7158487847015/README.md",
+      "quote": "This crate is 10 to 50 times faster than [`hex`] in encoding and decoding, and 100+ times faster than `libstd` in formatting."
+    },
+    {
+      "url": "https://github.com/DaniPopes/const-hex/blob/7d78addb8fb7a7abbf88010b74e7158487847015/README.md",
+      "quote": "The following benchmarks were ran on an AMD Ryzen 9 7950X, compiled with `1.83.0-nightly (9ff5fc4ff 2024-10-03)` on `x86_64-unknown-linux-gnu`."
+    },
+    {
+      "url": "https://github.com/DaniPopes/const-hex/blob/7d78addb8fb7a7abbf88010b74e7158487847015/README.md",
+      "quote": "test encode::const_hex::bench1_32b ... bench: 7.06 ns/iter (+/- 0.15)"
+    },
+    {
+      "url": "https://github.com/DaniPopes/const-hex/blob/7d78addb8fb7a7abbf88010b74e7158487847015/README.md",
+      "quote": "test encode::const_hex::bench6_1m ... bench: 30,716.17 ns/iter (+/- 795.98)"
+    },
+    {
+      "url": "https://github.com/DaniPopes/const-hex/blob/7d78addb8fb7a7abbf88010b74e7158487847015/README.md",
+      "quote": "test encode::hex::bench1_32b ... bench: 102.11 ns/iter (+/- 1.75)"
+    },
+    {
+      "url": "https://github.com/DaniPopes/const-hex/blob/7d78addb8fb7a7abbf88010b74e7158487847015/README.md",
+      "quote": "test encode::hex::bench6_1m ... bench: 3,048,496.30 ns/iter (+/- 223,992.59)"
+    },
+    {
+      "url": "https://github.com/DaniPopes/const-hex/blob/7d78addb8fb7a7abbf88010b74e7158487847015/README.md",
+      "quote": "test decode::const_hex::bench1_32b ... bench: 17.57 ns/iter (+/- 0.53)"
+    },
+    {
+      "url": "https://github.com/DaniPopes/const-hex/blob/7d78addb8fb7a7abbf88010b74e7158487847015/README.md",
+      "quote": "test decode::const_hex::bench6_1m ... bench: 108,937.41 ns/iter (+/- 6,453.24)"
+    },
+    {
+      "url": "https://github.com/DaniPopes/const-hex/blob/7d78addb8fb7a7abbf88010b74e7158487847015/README.md",
+      "quote": "test decode::hex::bench1_32b ... bench: 107.13 ns/iter (+/- 7.28)"
+    },
+    {
+      "url": "https://github.com/DaniPopes/const-hex/blob/7d78addb8fb7a7abbf88010b74e7158487847015/README.md",
+      "quote": "test decode::hex::bench6_1m ... bench: 6,409,293.90 ns/iter (+/- 102,747.28)"
+    },
+    {
+      "url": "https://github.com/DaniPopes/const-hex/blob/7d78addb8fb7a7abbf88010b74e7158487847015/README.md",
+      "quote": "test encode_to_slice::const_hex::bench1_32b ... bench: 1.57 ns/iter (+/- 0.01)"
+    },
+    {
+      "url": "https://github.com/DaniPopes/const-hex/blob/7d78addb8fb7a7abbf88010b74e7158487847015/README.md",
+      "quote": "test encode_to_slice::const_hex::bench6_1m ... bench: 32,631.90 ns/iter (+/- 1,135.39)"
+    },
+    {
+      "url": "https://github.com/DaniPopes/const-hex/blob/7d78addb8fb7a7abbf88010b74e7158487847015/README.md",
+      "quote": "test encode_to_slice::hex::bench1_32b ... bench: 12.11 ns/iter (+/- 0.31)"
+    },
+    {
+      "url": "https://github.com/DaniPopes/const-hex/blob/7d78addb8fb7a7abbf88010b74e7158487847015/README.md",
+      "quote": "test encode_to_slice::hex::bench6_1m ... bench: 518,929.65 ns/iter (+/- 2,202.04)"
+    },
+    {
+      "url": "https://github.com/DaniPopes/const-hex/blob/7d78addb8fb7a7abbf88010b74e7158487847015/README.md",
+      "quote": "test format::const_hex::bench1_32b ... bench: 10.01 ns/iter (+/- 0.09)"
+    },
+    {
+      "url": "https://github.com/DaniPopes/const-hex/blob/7d78addb8fb7a7abbf88010b74e7158487847015/README.md",
+      "quote": "test format::const_hex::bench2_256b ... bench: 26.68 ns/iter (+/- 0.49)"
+    },
+    {
+      "url": "https://github.com/DaniPopes/const-hex/blob/7d78addb8fb7a7abbf88010b74e7158487847015/README.md",
+      "quote": "test format::const_hex::bench6_1m ... bench: 78,056.40 ns/iter (+/- 1,584.60)"
+    },
+    {
+      "url": "https://github.com/DaniPopes/const-hex/blob/7d78addb8fb7a7abbf88010b74e7158487847015/README.md",
+      "quote": "test format::std::bench1_32b ... bench: 373.63 ns/iter (+/- 3.41)"
+    },
+    {
+      "url": "https://github.com/DaniPopes/const-hex/blob/7d78addb8fb7a7abbf88010b74e7158487847015/README.md",
+      "quote": "test format::std::bench2_256b ... bench: 2,885.37 ns/iter (+/- 43.81)"
+    },
+    {
+      "url": "https://github.com/DaniPopes/const-hex/blob/7d78addb8fb7a7abbf88010b74e7158487847015/README.md",
+      "quote": "test format::std::bench6_1m ... bench: 12,348,138.40 ns/iter (+/- 291,827.38)"
+    }
+  ],
+  "checked": "2026-10-28"
+}

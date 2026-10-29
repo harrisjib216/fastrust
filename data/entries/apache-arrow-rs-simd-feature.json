@@ -1,0 +1,112 @@
+{
+  "id": "https://github.com/apache/arrow-rs#simd-feature",
+  "name": "arrow-rs `simd` feature (hand-written packed_simd arithmetic kernels)",
+  "domain": "numerics-and-media",
+  "category": "simd",
+  "baseline": "arrow's scalar arithmetic kernels left to LLVM's auto-vectorizer",
+  "verdict": "reject",
+  "verdict_reason": "Arrow's own measurements showed the scalar, auto-vectorized add, subtract and multiply kernels running 1.5x to 2.1x faster than its explicit SIMD versions, so the project deleted them in 2022 and removed the whole simd feature in December 2023. Explicit SIMD kept a lead only for checked division, where the scalar loop has a branch per element.",
+  "evidence_tier": "A",
+  "tier_reason": "The arrow project measured its own change with public criterion benchmarks, stating the CPU, array size and target-cpu flag.",
+  "claimed_speedup": "Criterion medians, 64k-element arrays, with simd feature vs without: add 27.895 us vs 13.485 us, subtract 27.194 us vs 17.829 us, multiply 27.872 us vs 16.638 us (auto-vectorized 2.07x, 1.53x and 1.68x faster) (derived from page data); checked divide 46.385 us vs 104.55 us (explicit SIMD 2.25x faster) (derived from page data)",
+  "workload": "arrow arithmetic_kernels criterion benchmarks on primitive arrays of 64k elements: add, subtract, multiply, divide, modulo, with and without nulls.",
+  "metric": "time",
+  "hardware": "AMD Ryzen 3700U laptop",
+  "os": "",
+  "toolchain": "Nightly rustc of January 2022 (packed_simd required nightly); RUSTFLAGS=\"-C target-cpu=skylake\"",
+  "benchmark_date": "2022-01-15",
+  "benchmark_url": "https://github.com/apache/arrow-rs/issues/1182",
+  "repo_url": "https://github.com/apache/arrow-rs",
+  "docs_url": "https://github.com/apache/arrow-rs/pull/5184",
+  "license": "Apache-2.0",
+  "usability": "copyable",
+  "language": "Rust",
+  "platforms": "Was nightly-only (packed_simd); removed in December 2023",
+  "install": "No longer available: the simd feature was removed from arrow",
+  "maintenance_status": "abandoned",
+  "stars": 3650,
+  "last_commit": "2026-10-28",
+  "one_liner": "Arrow's hand-written packed_simd kernels lost to auto-vectorized scalar loops (1.5-2.1x slower) and were removed; the default won.",
+  "how_it_is_fast": "It was not faster for simple arithmetic. The explicit kernels processed a fixed number of lanes per iteration, while LLVM unrolled the plain loops several times and checked the loop condition less often. For checked division the scalar loop branches on zero divisors per element, which blocks auto-vectorization, so the explicit SIMD kernel kept its lead there.",
+  "use_it_when": [
+    "Treat this as evidence for the default: write branch-free scalar loops over slices and let LLVM vectorize them before reaching for explicit SIMD."
+  ],
+  "skip_it_when": [
+    "Do not assume hand-written SIMD beats the auto-vectorizer for element-wise arithmetic; measure first."
+  ],
+  "caveats": [
+    "The numbers come from one laptop with target-cpu=skylake; with default x86_64 flags the auto-vectorizer can only use SSE2, which narrows what either approach can do.",
+    "The explicit kernels used packed_simd, the nightly-only predecessor of std::simd; a std::simd rewrite was never benchmarked against the auto-vectorized code.",
+    "Arrow's CONTRIBUTING guide lists the conditions for auto-vectorization to work: no per-row conditionals, limited inlining, no horizontal reductions, and suitable target-cpu."
+  ],
+  "tradeoffs": [
+    "Relying on the auto-vectorizer means performance can silently drop when a code change adds a branch or blocks inlining."
+  ],
+  "evidence": [
+    {
+      "url": "https://github.com/apache/arrow-rs/issues/1182",
+      "quote": "Benchmarks with array size of 64k, run on an AMD Ryzen 3700U laptop."
+    },
+    {
+      "url": "https://github.com/apache/arrow-rs/issues/1182",
+      "quote": "RUSTFLAGS=\"-C target-cpu=skylake\""
+    },
+    {
+      "url": "https://github.com/apache/arrow-rs/issues/1182",
+      "quote": "With simd feature:"
+    },
+    {
+      "url": "https://github.com/apache/arrow-rs/issues/1182",
+      "quote": "add time: [27.039 us 27.895 us 28.542 us]"
+    },
+    {
+      "url": "https://github.com/apache/arrow-rs/issues/1182",
+      "quote": "subtract time: [26.408 us 27.194 us 28.040 us]"
+    },
+    {
+      "url": "https://github.com/apache/arrow-rs/issues/1182",
+      "quote": "multiply time: [27.303 us 27.872 us 28.429 us]"
+    },
+    {
+      "url": "https://github.com/apache/arrow-rs/issues/1182",
+      "quote": "divide time: [45.050 us 46.385 us 47.590 us]"
+    },
+    {
+      "url": "https://github.com/apache/arrow-rs/issues/1182",
+      "quote": "Without simd feature"
+    },
+    {
+      "url": "https://github.com/apache/arrow-rs/issues/1182",
+      "quote": "add time: [12.703 us 13.485 us 14.165 us]"
+    },
+    {
+      "url": "https://github.com/apache/arrow-rs/issues/1182",
+      "quote": "subtract time: [17.586 us 17.829 us 18.018 us]"
+    },
+    {
+      "url": "https://github.com/apache/arrow-rs/issues/1182",
+      "quote": "multiply time: [16.261 us 16.638 us 17.035 us]"
+    },
+    {
+      "url": "https://github.com/apache/arrow-rs/issues/1182",
+      "quote": "divide time: [97.142 us 104.55 us 111.13 us]"
+    },
+    {
+      "url": "https://github.com/apache/arrow-rs/pull/1221",
+      "quote": "Removes explicit simd arithmetic kernels, except for division/modulo, as compiler autovectorization actually generates better code."
+    },
+    {
+      "url": "https://github.com/apache/arrow-rs/pull/5184",
+      "quote": "removed the last major use of SIMD, so we can now remove this feature"
+    },
+    {
+      "url": "https://github.com/apache/arrow-rs/blob/2d6352b3b35a17cef2618f6475b7230ce0146d55/arrow/Cargo.toml",
+      "quote": "packed_simd = { version = \"0.3\", optional = true, package = \"packed_simd_2\" }"
+    },
+    {
+      "url": "https://github.com/apache/arrow-rs/blob/70d8190350ffb2fd3a34c92d8844d505eaf0af75/arrow/CONTRIBUTING.md",
+      "quote": "This crate used to contain several kernels with hand-written SIMD instructions, which were removed after discovering the auto-vectorized code was faster."
+    }
+  ],
+  "checked": "2026-10-28"
+}

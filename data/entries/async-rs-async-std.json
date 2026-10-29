@@ -1,0 +1,82 @@
+{
+  "id": "https://github.com/async-rs/async-std",
+  "name": "async-std",
+  "domain": "concurrency-and-runtime",
+  "category": "async-runtimes",
+  "baseline": "Tokio master of early November 2019 (already on the rewritten multi-threaded scheduler)",
+  "verdict": "downgrade",
+  "verdict_reason": "The 1.0 announcement's microbenchmarks show async-std 1.04x to 1.95x faster than Tokio at spawning tasks and its Mutex about 2.9x faster under contention. These are first-party microbenchmarks with no end-to-end test, nothing newer exists, and the project has been discontinued with its maintainers recommending smol.",
+  "evidence_tier": "C",
+  "tier_reason": "First-party numbers with public benchmark sources and a pinned toolchain tag, but no hardware stated.",
+  "claimed_speedup": "Task microbenchmarks, Tokio vs async-std ns/iter: chained_spawn 123,921 vs 119,706 (x 1.04), ping_pong 401,712 vs 289,069 (x 1.39), spawn_many 5,326,354 vs 3,149,276 (x 1.69), yield_many 7,640,958 vs 3,919,748 (x 1.95): 'up to twice as fast as tokio when spawning tasks'. Contended mutex: async_std::sync::Mutex 893,650 vs tokio::sync::Mutex 2,614,997 ns/iter.",
+  "workload": "Tokio's own scheduler microbenchmarks (chained spawn, ping-pong, spawn many, yield many) ported to async-std, plus async mutex contention and creation benchmarks.",
+  "metric": "time",
+  "hardware": "",
+  "os": "",
+  "toolchain": "Nightly pinned in the async-std-1.0-bench tag of matklad/tokio (version not stated in the post)",
+  "benchmark_date": "2019-11-11",
+  "benchmark_url": "https://async.rs/blog/announcing-async-std-1-0/",
+  "repo_url": "https://github.com/async-rs/async-std",
+  "docs_url": "https://docs.rs/async-std",
+  "license": "Apache-2.0 OR MIT",
+  "usability": "copyable",
+  "language": "Rust",
+  "platforms": "Linux, macOS, Windows",
+  "install": "cargo add async-std (discontinued; maintainers recommend smol)",
+  "maintenance_status": "stale",
+  "stars": 4062,
+  "last_commit": "2025-08-15",
+  "one_liner": "Discontinued std-like async runtime whose 2019 launch microbenchmarks showed up to 1.95x faster task spawning than Tokio.",
+  "how_it_is_fast": "A work-stealing executor derived from crossbeam's deque work with a global injector queue, and an async Mutex that wakes waiters with less bookkeeping than Tokio's semaphore-based Mutex of the time.",
+  "use_it_when": [
+    "Maintaining existing async-std code until it is moved to smol"
+  ],
+  "skip_it_when": [
+    "New projects: the README says async-std has been discontinued and recommends smol",
+    "Choosing a runtime for speed: the only numbers are 2019 microbenchmarks"
+  ],
+  "caveats": [
+    "Microbenchmarks only, first-party, no hardware stated.",
+    "Tokio's Mutex and scheduler have been reworked since 2019.",
+    "The post itself notes that low-contention applications will not benefit from the Mutex result."
+  ],
+  "tradeoffs": [
+    "Discontinued: no further fixes expected.",
+    "Smaller library ecosystem than Tokio."
+  ],
+  "evidence": [
+    {
+      "url": "https://async.rs/blog/announcing-async-std-1-0/",
+      "quote": "chained_spawn 123,921 119,706 x 1.04"
+    },
+    {
+      "url": "https://async.rs/blog/announcing-async-std-1-0/",
+      "quote": "ping_pong 401,712 289,069 x 1.39"
+    },
+    {
+      "url": "https://async.rs/blog/announcing-async-std-1-0/",
+      "quote": "spawn_many 5,326,354 3,149,276 x 1.69"
+    },
+    {
+      "url": "https://async.rs/blog/announcing-async-std-1-0/",
+      "quote": "yield_many 7,640,958 3,919,748 x 1.95"
+    },
+    {
+      "url": "https://async.rs/blog/announcing-async-std-1-0/",
+      "quote": "async-std is up to twice as fast as tokio when spawning tasks."
+    },
+    {
+      "url": "https://async.rs/blog/announcing-async-std-1-0/",
+      "quote": "contention ... bench: 893,650 ns/iter (+/- 44,336)"
+    },
+    {
+      "url": "https://async.rs/blog/announcing-async-std-1-0/",
+      "quote": "contention ... bench: 2,614,997 ns/iter (+/- 167,533)"
+    },
+    {
+      "url": "https://github.com/async-rs/async-std",
+      "quote": "`async-std` has been discontinued; use `smol` instead"
+    }
+  ],
+  "checked": "2026-10-28"
+}

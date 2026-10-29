@@ -1,0 +1,89 @@
+{
+  "id": "https://github.com/trifectatechfoundation/bzip2-rs",
+  "name": "bzip2 0.6 (libbz2-rs-sys Rust backend)",
+  "domain": "compression",
+  "category": "other-codecs",
+  "baseline": "The C libbzip2 that the bzip2 crate linked through bzip2-sys before 0.6.0",
+  "verdict": "confirm",
+  "verdict_reason": "The Rust port needs 9.66% to 14.87% fewer CPU cycles to compress and 4.48% to 10.00% fewer to decompress across the published inputs. Since bzip2 0.6.0 it is the crate's default, so upgrading gets the gain.",
+  "evidence_tier": "C",
+  "tier_reason": "First-party CPU-cycle counts with no machine, compiler or flags stated.",
+  "claimed_speedup": "Compression: -14.87% CPU cycles (sample3.ref), -14.30% (silesia-small.tar level 1), - 9.66% (level 9); decompression: - 4.48% to -10.00% CPU cycles across six files.",
+  "workload": "Compress sample3.ref and silesia-small.tar at levels 1 and 9; decompress six .bz2 files from 2.5M to 2.3G cycles of work.",
+  "metric": "CPU cycles",
+  "hardware": "",
+  "os": "",
+  "toolchain": "",
+  "benchmark_date": "2025-06-17",
+  "benchmark_url": "https://trifectatech.org/blog/bzip2-crate-switches-from-c-to-rust/",
+  "repo_url": "https://github.com/trifectatechfoundation/bzip2-rs",
+  "docs_url": "https://docs.rs/bzip2",
+  "license": "MIT OR Apache-2.0",
+  "usability": "copyable",
+  "language": "Rust",
+  "platforms": "Any Rust target, including wasm32 and Windows without a C toolchain",
+  "install": "cargo add bzip2 (0.6.0 or later uses the Rust backend by default)",
+  "maintenance_status": "active",
+  "stars": 174,
+  "last_commit": "2026-01-13",
+  "one_liner": "bzip2 crate 0.6 swapped C libbzip2 for a Rust port: 10-15% fewer cycles to compress, 4-10% fewer to decompress.",
+  "how_it_is_fast": "libbz2-rs-sys started as a c2rust translation of libbzip2 and was then cleaned up and tuned with the lessons from zlib-rs. The post does not break down which changes produced the gain.",
+  "use_it_when": [
+    "You already depend on bzip2 (often indirectly through zip or tar crates): upgrading to 0.6 gets the speedup",
+    "You need bzip2 on wasm or cross-compiled targets where building C is a problem"
+  ],
+  "skip_it_when": [
+    "You need byte-identical behavior with a system libbzip2 shared library for some external reason"
+  ],
+  "caveats": [
+    "Cycle counts, not wall time; the post does not name the machine and notes noisier decompression results on its macOS benchmark machine",
+    "First-party numbers with no CPU named"
+  ],
+  "tradeoffs": [
+    "Contains unsafe code to mirror the C interface; tested under Miri and audited by Radically Open Security",
+    "libbz2-rs-sys is distributed under the bzip2-1.0.6 license, while the bzip2 crate is MIT OR Apache-2.0"
+  ],
+  "evidence": [
+    {
+      "url": "https://trifectatech.org/blog/bzip2-crate-switches-from-c-to-rust/",
+      "quote": "which uses our rust implementation of the bzip2 algorithm"
+    },
+    {
+      "url": "https://trifectatech.org/blog/bzip2-crate-switches-from-c-to-rust/",
+      "quote": "Our rust implementation generally outperforms the C implementation, though there are a couple of cases where we only match C performance."
+    },
+    {
+      "url": "https://trifectatech.org/blog/bzip2-crate-switches-from-c-to-rust/",
+      "quote": "sample3.ref (level 1)"
+    },
+    {
+      "url": "https://trifectatech.org/blog/bzip2-crate-switches-from-c-to-rust/",
+      "quote": "silesia-small.tar (level 1)"
+    },
+    {
+      "url": "https://trifectatech.org/blog/bzip2-crate-switches-from-c-to-rust/",
+      "quote": "silesia-small.tar (level 9)"
+    },
+    {
+      "url": "https://trifectatech.org/blog/bzip2-crate-switches-from-c-to-rust/",
+      "quote": "-14.87%"
+    },
+    {
+      "url": "https://trifectatech.org/blog/bzip2-crate-switches-from-c-to-rust/",
+      "quote": "-14.30%"
+    },
+    {
+      "url": "https://trifectatech.org/blog/bzip2-crate-switches-from-c-to-rust/",
+      "quote": "- 9.66%"
+    },
+    {
+      "url": "https://trifectatech.org/blog/bzip2-crate-switches-from-c-to-rust/",
+      "quote": "- 4.48%"
+    },
+    {
+      "url": "https://trifectatech.org/blog/bzip2-crate-switches-from-c-to-rust/",
+      "quote": "-10.00%"
+    }
+  ],
+  "checked": "2026-10-28"
+}

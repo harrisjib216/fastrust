@@ -1,0 +1,86 @@
+{
+  "id": "https://github.com/algesten/ureq",
+  "name": "ureq (blocking HTTP client)",
+  "domain": "server-and-networking",
+  "category": "http-clients",
+  "baseline": "reqwest 0.11.18 on a current-thread Tokio runtime, 1,000 sequential keep-alive GETs to a local server",
+  "verdict": "reject",
+  "verdict_reason": "ureq does not claim to be faster than reqwest, and the one public head-to-head shows no difference: 108.4 ms vs 108.7 ms for 1,000 requests, inside each other's error bars. Choose ureq for its small blocking API and dependency tree, not for speed.",
+  "evidence_tier": "B",
+  "tier_reason": "Third-party benchmark (written to compare a Zig HTTP client) with public code and hyperfine output, run on a GitHub Actions ubuntu-latest runner; no CPU model or rustc version stated.",
+  "claimed_speedup": "hyperfine mean for 1,000 requests: rust-ureq 108.4 ± 2.3 ms, rust-reqwest 108.7 ± 2.2 ms, rust-hyper 107.6 ± 1.3 ms; rust-hyper 1.01 ± 0.02 times faster than rust-ureq and than rust-reqwest",
+  "workload": "One process sends 1,000 sequential HTTP/1.1 GET requests with keep-alive and TCP_NODELAY to a server on 127.0.0.1 and prints each body; hyperfine, 10 warmup runs and 100 measured runs, process start-up included.",
+  "metric": "time",
+  "hardware": "GitHub Actions ubuntu-latest runner (CPU not stated)",
+  "os": "Ubuntu (GitHub Actions ubuntu-latest)",
+  "toolchain": "cargo build --release with opt-level 3; rustc version not stated. ureq 2.7.1, reqwest 0.11.18, hyper 0.14.27.",
+  "benchmark_date": "2023",
+  "benchmark_url": "https://github.com/orhun/zig-http-benchmarks",
+  "repo_url": "https://github.com/algesten/ureq",
+  "docs_url": "https://docs.rs/ureq",
+  "license": "MIT OR Apache-2.0",
+  "usability": "copyable",
+  "language": "Rust",
+  "platforms": "Any platform with std networking; rustls by default, native-tls optional",
+  "install": "cargo add ureq",
+  "maintenance_status": "active",
+  "stars": 2219,
+  "last_commit": "2026-10-27",
+  "one_liner": "Blocking HTTP client with a small dependency tree; no measured speed advantage over reqwest for sequential requests.",
+  "how_it_is_fast": "ureq does blocking I/O on the calling thread, so there is no async runtime to start and no task scheduling per request. For sequential requests to one host the time is dominated by the network round trip and the server, which is why ureq, reqwest and raw hyper finish within about 1% of each other.",
+  "use_it_when": [
+    "A CLI tool, build script or small service makes a few HTTP calls and you want no async runtime and fewer dependencies."
+  ],
+  "skip_it_when": [
+    "You expect it to make requests faster; the measured difference from reqwest is zero within error.",
+    "You need many concurrent requests or HTTP/2 multiplexing; ureq is blocking and HTTP/1.1 only."
+  ],
+  "caveats": [
+    "Microbenchmark against localhost: 1,000 sequential requests with tiny bodies, so it measures per-request client overhead, not throughput under concurrency.",
+    "Versions are from 2023 (ureq 2.7.1, reqwest 0.11.18); ureq 3.x and reqwest 0.13 have not been benchmarked this way.",
+    "Process start-up is part of each measured run."
+  ],
+  "tradeoffs": [
+    "Blocking only: each in-flight request occupies a thread.",
+    "No HTTP/2."
+  ],
+  "evidence": [
+    {
+      "url": "https://github.com/orhun/zig-http-benchmarks/blob/65d56a5a2b611c07854467fd747162fa0310e142/README.md",
+      "quote": "| `rust-ureq`           |  108.4 ± 2.3 |    105.7 |    123.1 |  1.01 ± 0.02 |"
+    },
+    {
+      "url": "https://github.com/orhun/zig-http-benchmarks/blob/65d56a5a2b611c07854467fd747162fa0310e142/README.md",
+      "quote": "| `rust-reqwest`        |  108.7 ± 2.2 |    105.4 |    123.7 |  1.01 ± 0.02 |"
+    },
+    {
+      "url": "https://github.com/orhun/zig-http-benchmarks/blob/65d56a5a2b611c07854467fd747162fa0310e142/README.md",
+      "quote": "| `rust-hyper`          |  107.6 ± 1.3 |    104.4 |    114.8 |         1.00 |"
+    },
+    {
+      "url": "https://github.com/orhun/zig-http-benchmarks/blob/65d56a5a2b611c07854467fd747162fa0310e142/README.md",
+      "quote": "rust-hyper ran 1.01 ± 0.02 times faster than rust-ureq 1.01 ± 0.02 times faster than rust-reqwest"
+    },
+    {
+      "url": "https://github.com/orhun/zig-http-benchmarks/blob/65d56a5a2b611c07854467fd747162fa0310e142/README.md",
+      "quote": "The results are coming from a GitHub runner (`ubuntu-latest`)"
+    },
+    {
+      "url": "https://github.com/orhun/zig-http-benchmarks/blob/65d56a5a2b611c07854467fd747162fa0310e142/rust-ureq/src/main.rs",
+      "quote": "for i in 1..=1000 {"
+    },
+    {
+      "url": "https://github.com/orhun/zig-http-benchmarks/blob/65d56a5a2b611c07854467fd747162fa0310e142/rust-ureq/Cargo.toml",
+      "quote": "ureq = { version = \"2.7.1\", default-features = false }"
+    },
+    {
+      "url": "https://github.com/orhun/zig-http-benchmarks/blob/65d56a5a2b611c07854467fd747162fa0310e142/rust-reqwest/Cargo.toml",
+      "quote": "reqwest = { version = \"0.11.18\", default-features = false }"
+    },
+    {
+      "url": "https://github.com/orhun/zig-http-benchmarks/blob/65d56a5a2b611c07854467fd747162fa0310e142/bench.sh",
+      "quote": "\"--warmup\" \"10\" \"--runs\" \"100\""
+    }
+  ],
+  "checked": "2026-10-28"
+}

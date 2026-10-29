@@ -1,0 +1,68 @@
+{
+  "id": "https://github.com/zesterer/flume",
+  "name": "flume",
+  "domain": "concurrency-and-runtime",
+  "category": "channels",
+  "baseline": "std::sync::mpsc (the claim was charted against the pre-1.67 implementation)",
+  "verdict": "downgrade",
+  "verdict_reason": "The README's 'always faster than std::sync::mpsc' was charted against the old std channel. Since Rust 1.67 std::sync::mpsc is crossbeam-channel's algorithm, which the same README says flume beats only 'sometimes', so the 'always' no longer holds as stated. No text numbers exist either way.",
+  "evidence_tier": "D",
+  "tier_reason": "The only numbers are in a chart image from crossbeam's benchmark suite, run by the author on a stated machine.",
+  "claimed_speedup": "README: 'Always faster than `std::sync::mpsc` and sometimes `crossbeam-channel`'; the only numbers are in a chart from crossbeam's benchmark suite (AMD Ryzen 7 3700x, Linux kernel 5.11.2).",
+  "workload": "crossbeam-channel benchmark suite (seq, spsc, mpsc, mpmc over bounded and unbounded channels).",
+  "metric": "time",
+  "hardware": "AMD Ryzen 7 3700X, 8 cores / 16 threads",
+  "os": "Linux 5.11.2, bfq scheduler",
+  "toolchain": "",
+  "benchmark_date": "2021",
+  "benchmark_url": "https://github.com/zesterer/flume",
+  "repo_url": "https://github.com/zesterer/flume",
+  "docs_url": "https://docs.rs/flume",
+  "license": "Apache-2.0/MIT",
+  "usability": "copyable",
+  "language": "Rust",
+  "platforms": "All std targets",
+  "install": "cargo add flume",
+  "maintenance_status": "active",
+  "stars": 3081,
+  "last_commit": "2026-10-15",
+  "one_liner": "MPMC channel with sync and async APIs and no unsafe code; its 'always faster than std mpsc' chart predates std adopting crossbeam's design.",
+  "how_it_is_fast": "A single mutex-protected queue with a carefully kept short critical section, plus a signal depot for waking blocked senders and receivers. Avoiding unsafe code keeps the design simple; speed comes from minimal work under the lock rather than lock-free structures.",
+  "use_it_when": [
+    "You want one channel type usable from both sync and async code",
+    "A no-unsafe dependency policy",
+    "MPMC or select-style waiting with timeouts on stable Rust"
+  ],
+  "skip_it_when": [
+    "Single-consumer sync channels on Rust 1.67+, where std::sync::mpsc needs no dependency and no current numbers show flume ahead"
+  ],
+  "caveats": [
+    "Chart image only; no numbers in text.",
+    "The chart predates Rust 1.67 (Linux 5.11.2 era), so its std mpsc is the old implementation.",
+    "A 2025 chart in kanal's README (rustc 1.85.1) includes both flume and std::sync::mpsc and does not show flume ahead of std in the bounded SPSC tests (chart reading, not a quotable number).",
+    "The README carries a 'casual maintenance' badge."
+  ],
+  "tradeoffs": [
+    "Lock-based queue: under heavy contention throughput depends on the mutex.",
+    "Optional spin feature trades CPU for latency on some platforms."
+  ],
+  "evidence": [
+    {
+      "url": "https://github.com/zesterer/flume",
+      "quote": "Always faster than `std::sync::mpsc` and sometimes `crossbeam-channel`"
+    },
+    {
+      "url": "https://github.com/zesterer/flume",
+      "quote": "Tests were performed on an AMD Ryzen 7 3700x with 8/16 cores running Linux kernel 5.11.2 with the bfq scheduler."
+    },
+    {
+      "url": "https://github.com/zesterer/flume",
+      "quote": "No `unsafe` code anywhere in the codebase!"
+    },
+    {
+      "url": "https://blog.rust-lang.org/2023/01/26/Rust-1.67.0/",
+      "quote": "in this release the implementation is switched out to be based on crossbeam-channel"
+    }
+  ],
+  "checked": "2026-10-28"
+}

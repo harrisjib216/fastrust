@@ -1,0 +1,64 @@
+{
+  "id": "https://github.com/image-rs/image#zune-jpeg-decoder",
+  "name": "image 0.25: JPEG decoding switched to zune-jpeg",
+  "domain": "numerics-and-media",
+  "category": "images",
+  "baseline": "image 0.24 and earlier, which decoded JPEG with jpeg-decoder",
+  "verdict": "confirm",
+  "verdict_reason": "image 0.25.0 replaced jpeg-decoder with zune-jpeg, which its author measured 1.5x to 2x faster. Upgrading image from 0.24 to 0.25 or later is the cheapest way to get the faster decoder.",
+  "evidence_tier": "C",
+  "tier_reason": "The switch is documented in image's release notes; the size of the gain rests on zune-jpeg's author's figure without workload detail.",
+  "claimed_speedup": "zune-jpeg is 1.5x to 2x faster than jpeg-decoder (author figure), adopted as the default JPEG decoder in image Version 0.25.0",
+  "workload": "JPEG decoding through image::open / ImageReader with the default jpeg feature.",
+  "metric": "time",
+  "hardware": "",
+  "os": "",
+  "toolchain": "",
+  "benchmark_date": "2023-03",
+  "benchmark_url": "https://github.com/image-rs/image/blob/main/CHANGES.md",
+  "repo_url": "https://github.com/image-rs/image",
+  "docs_url": "https://docs.rs/image",
+  "license": "MIT OR Apache-2.0",
+  "usability": "copyable",
+  "language": "Rust",
+  "platforms": "Any",
+  "install": "cargo add image (0.25.0 or later, released 2024-03-10)",
+  "maintenance_status": "active",
+  "stars": 5898,
+  "last_commit": "2026-09-15",
+  "one_liner": "Since 0.25.0 the image crate decodes JPEG with zune-jpeg instead of jpeg-decoder; upgrading gets the 1.5-2x faster decoder for free.",
+  "how_it_is_fast": "image delegates JPEG decoding to its codec crate; 0.25.0 swapped jpeg-decoder for zune-jpeg, which has SIMD color conversion and a faster Huffman decoder. Later releases track zune-jpeg 0.5.",
+  "use_it_when": [
+    "You are still on image 0.24 or earlier and decode JPEGs."
+  ],
+  "skip_it_when": [
+    "You need lossless JPEG decoding, which zune-jpeg does not support and jpeg-decoder does."
+  ],
+  "caveats": [
+    "No benchmark in image's own repository quantifies the switch; the figure is zune-jpeg's author's.",
+    "image 0.25 also changed decoder traits (BufRead + Seek bounds, removed incremental decoding), so the upgrade is a breaking change.",
+    "The tiff crate still pulled in jpeg-decoder for a while after the switch (image issue #2289)."
+  ],
+  "tradeoffs": [
+    "Breaking API changes from 0.24 to 0.25; MSRV raised (1.88.0 for 0.25.10)."
+  ],
+  "evidence": [
+    {
+      "url": "https://github.com/image-rs/image/blob/075e65d618a323e5cb48c1d8710a2eca25d690c6/CHANGES.md",
+      "quote": "### Version 0.25.0"
+    },
+    {
+      "url": "https://github.com/image-rs/image/blob/075e65d618a323e5cb48c1d8710a2eca25d690c6/CHANGES.md",
+      "quote": "Switched to zune-jpeg for JPEG decoding."
+    },
+    {
+      "url": "https://github.com/image-rs/image/blob/v0.25.10/Cargo.toml",
+      "quote": "zune-jpeg = { version = \"0.5.5\", optional = true }"
+    },
+    {
+      "url": "https://www.libhunt.com/posts/1119512-announcing-zune-jpeg-rust-s-fastest-jpeg-decoder",
+      "quote": "zune-jpeg is 1.5x to 2x faster than jpeg-decoder and is on par with libjpeg-turbo"
+    }
+  ],
+  "checked": "2026-10-28"
+}

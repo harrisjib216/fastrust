@@ -1,0 +1,54 @@
+{
+  "id": "rustc:pipelined-compilation",
+  "name": "Pipelined compilation in Cargo (Rust 1.38)",
+  "domain": "tooling",
+  "category": "compile-times",
+  "baseline": "Cargo before Rust 1.38, which waited for each dependency to finish compiling before starting crates that depend on it",
+  "verdict": "confirm",
+  "verdict_reason": "Rust 1.38 reported 10-20% faster optimized clean builds for some crate graphs during testing. It has been on by default since 2019, so every current toolchain already has it.",
+  "evidence_tier": "B",
+  "tier_reason": "The rust-lang project reporting on its own toolchain change; the figure summarizes test reports rather than one published benchmark.",
+  "claimed_speedup": "10-20% faster optimized, clean builds of some crate graphs; no effect on single-crate builds",
+  "workload": "Clean release builds of multi-crate dependency graphs",
+  "metric": "build time",
+  "hardware": "",
+  "os": "",
+  "toolchain": "Rust 1.38.0",
+  "benchmark_date": "2019-09",
+  "benchmark_url": "https://blog.rust-lang.org/2019/09/26/Rust-1.38.0/",
+  "repo_url": null,
+  "docs_url": "https://blog.rust-lang.org/2019/09/26/Rust-1.38.0/",
+  "license": null,
+  "usability": "platform",
+  "language": "Rust",
+  "platforms": "All targets",
+  "install": "Built into Cargo since Rust 1.38; no configuration",
+  "maintenance_status": "active",
+  "stars": null,
+  "last_commit": "",
+  "one_liner": "Since Rust 1.38, Cargo starts compiling a crate as soon as its dependencies' metadata is ready, not after they finish.",
+  "how_it_is_fast": "To type-check a crate, rustc needs only its dependencies' metadata (types, exports), which is produced early in compilation. Cargo now starts dependent crates as soon as that metadata exists, overlapping their front end with the dependency's code generation and using more cores.",
+  "use_it_when": [
+    "Always on; nothing to enable"
+  ],
+  "skip_it_when": [
+    "Single-crate builds see no change"
+  ],
+  "caveats": [
+    "The 10-20% range is from test reports in 2019; the post says other graphs did not improve much and results depend on hardware"
+  ],
+  "tradeoffs": [
+    "None for users"
+  ],
+  "evidence": [
+    {
+      "url": "https://blog.rust-lang.org/2019/09/26/Rust-1.38.0/",
+      "quote": "While the change doesn't have any effect on builds for a single crate, during testing we got reports of 10-20% compilation speed increases for optimized, clean builds of some crate graphs. Other ones did not improve much, and the speedup depends on the hardware running the build, so your mileage might vary. No code changes are needed to benefit from this."
+    },
+    {
+      "url": "https://blog.rust-lang.org/2019/09/26/Rust-1.38.0/",
+      "quote": "Starting with Rust 1.38.0, Cargo will take advantage of this by automatically starting to build dependent crates as soon as metadata is ready."
+    }
+  ],
+  "checked": "2026-10-28"
+}

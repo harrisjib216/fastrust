@@ -1,0 +1,111 @@
+# aHash (AES-based keyed hasher)
+
+<sub>[fastrust](../../../README.md) › [Catalog](../../README.md) › [Collections](../README.md) › [Hashers for maps and sets](README.md)</sub>
+
+**Tier A** (reproducible public benchmark) · 🟡 Holds up in part · Open source · `Rust` · `MIT OR Apache-2.0` · 🟢 active
+
+> Keyed, randomly seeded hasher for HashMap that uses AES instructions where available; several times faster than SipHash-1-3.
+
+| | |
+|---|---|
+| **Beats** | std HashMap's RandomState (SipHash-1-3) for in-memory hash map keys |
+| **Claimed result** | Claimed: nearly 10x faster than SipHash for hash maps. Independent (rapidhash suite, AMD EPYC, target-cpu=native): geometric mean 5.63 vs 25.75 ns per operation for SipHash (about 4.6x, derived from page data); without native flags 6.50 vs 23.66 (about 3.6x, derived from page data); u64 lookup hit 2.81 vs 14.74 ns. Independent (foldhash suite, Intel Xeon): 8.74 vs 28.70 ns geometric mean (about 3.3x, derived from page data). |
+| **Workload** | foldhash benchmark suite: hash-only, lookup miss and hit in a 1,000-element map, and building a 1,000-element set from 10,000 inserts, over 16 key distributions (u32, u64, pairs, IPv4/IPv6, short strings, URLs, UUID strings, 1 KB and 10 KB byte strings). |
+| **Metric** | time (ns per operation, geometric mean across distributions) |
+| **Hardware** | AMD EPYC 9R14 (rapidhash suite); Intel Xeon Platinum 8481C and Apple M2 (foldhash suite) |
+| **Toolchain** | rapidhash suite: lto = "fat", codegen-units = 1, run with and without -C target-cpu=native; foldhash suite: Rust 1.80.1, lto = "thin", with and without -C target-cpu=native |
+| **Measured** | 2025-08 |
+| **Adoption** | 1.3k stars |
+| **Last commit** | 2025-11-21 |
+| **Platforms** | All Rust targets; AES-NI path on x86_64 only when aes is enabled at compile time (target-cpu=native or +aes), AES on aarch64, folded-multiply fallback elsewhere; no_std with the compile-time-rng feature |
+| **Install** | cargo add ahash |
+| **Links** | [repository](https://github.com/tkaitchuck/aHash) · [documentation](https://docs.rs/ahash) · [benchmark](https://github.com/hoxxep/rapidhash/blob/master/docs/bench_hash_x86_64_amd_epyc_9R14_native.txt) |
+
+## Verdict
+
+aHash is several times faster than SipHash-1-3 in independent hash-table benchmarks (about 3.3x to 4.6x by geometric mean), not the nearly 10x the project claims, which comes from hash-only measurements. Its 'fastest' claim no longer holds: foldhash and rapidhash beat it on most key types, and it leads only on medium and long strings with AES enabled.
+
+**Why tier A:** Two independent suites (foldhash's and rapidhash's) with public benchmark code, stated hardware and stated flags (Rust 1.80.1, LTO, with and without target-cpu=native).
+
+## Use it when
+
+- Hash maps keyed by medium-length strings on builds that enable AES (target-cpu=native or +aes); it had the fastest URL-key lookups in the rapidhash suite, ahead of gxhash and rapidhash.
+- Code that already uses AHashMap and needs a seeded hasher faster than SipHash; for new code, foldhash or rapidhash are usually faster.
+
+## Skip it when
+
+- Keys are integers or small tuples: foldhash, rapidhash and FxHash are faster there in both independent suites.
+- You ship a generic x86_64 binary without target-cpu flags: aHash then runs its fallback path and loses most of its lead.
+- Hashes are persisted or sent over the network: output changes between versions and machines.
+
+## How it is fast
+
+On x86_64 with AES enabled and on aarch64, aHash mixes input with one or two hardware AES rounds, which scramble 128 bits in a few cycles. Without AES it falls back to a folded 64x64->128-bit multiply. Both paths are far shorter than SipHash's ARX rounds, and the output is not fixed across versions or platforms, so the algorithm can change to whatever is fastest.
+
+## What it costs
+
+- DoS resistance: keyed with per-map random seeds and claims DoS resistance, but a 2023 key-recovery attack that needs only collision observations (issue #163) forced a fix in 0.8.4 and yanked older versions, and an open 2026 report (issue #292) shows fixed input pairs on the AES path that collide for far more keys than an ideal keyed hash would allow.
+- Map size: ahash::HashMap<u32, u32> is 64 bytes against 48 for std's HashMap, because the hasher state is larger.
+- Needs a randomness source at runtime (getrandom) or the compile-time-rng feature on no_std; without either it seeds from memory addresses, which the project says should not be relied on.
+
+## Problems with the evidence
+
+- The nearly 10x figure is aHash's own and comes from a chart image comparing raw hash speed, not hash-table operations.
+- The README still says hashbrown uses aHash by default; hashbrown switched its default to foldhash in 0.15.0 (2024-10-01).
+- Both independent suites tested aHash 0.8.11; the current release is 0.8.12.
+- The independent suites are run by authors of competing hashers (foldhash and rapidhash).
+
+## Evidence
+
+<details>
+<summary>12 quotes from the sources, checked 2026-10-28</summary>
+
+> For a hashmap: Because aHash nearly **10x** faster.
+>
+> — [github.com/tkaitchuck/aHash/blob/master/compare/readme.md](https://github.com/tkaitchuck/aHash/blob/master/compare/readme.md)
+
+> │ geometric_mean ┆        4.68 ┆        5.34 ┆       5.24 ┆       5.91 ┆   5.01 ┆   5.98 ┆  5.63 ┆   25.75 │
+>
+> — [github.com/hoxxep/rapidhash/blob/master/README.md](https://github.com/hoxxep/rapidhash/blob/master/README.md)
+
+> │ geometric_mean ┆        4.67 ┆        5.38 ┆       5.27 ┆       5.99 ┆   6.13 ┆  6.50 ┆   23.66 │
+>
+> — [github.com/hoxxep/rapidhash/blob/master/README.md](https://github.com/hoxxep/rapidhash/blob/master/README.md)
+
+> │            u64 ┆  lookuphit ┆        2.21 ┆        2.73 ┆       2.21 ┆       2.71 ┆    2.89 ┆    2.03 ┆    2.81 ┆   14.74 │
+>
+> — [github.com/hoxxep/rapidhash/blob/master/docs/bench_hash_x86_64_amd_…](https://github.com/hoxxep/rapidhash/blob/master/docs/bench_hash_x86_64_amd_epyc_9R14_native.txt)
+
+> │         strurl ┆  lookuphit ┆       13.83 ┆       13.95 ┆      16.19 ┆      16.95 ┆   13.57 ┆   16.58 ┆   12.54 ┆   37.45 │
+>
+> — [github.com/hoxxep/rapidhash/blob/master/docs/bench_hash_x86_64_amd_…](https://github.com/hoxxep/rapidhash/blob/master/docs/bench_hash_x86_64_amd_epyc_9R14_native.txt)
+
+> │        geometric_mean       ┆       6.21 ┆       7.01 ┆    7.56 ┆    8.74 ┆   28.70 │
+>
+> — [github.com/orlp/foldhash/blob/master/README.md](https://github.com/orlp/foldhash/blob/master/README.md)
+
+> aHash is faster than foldhash for medium-long strings when compiled with AES instruction support, but is slower in almost every other scenario or when AES instructions are unavailable.
+>
+> — [github.com/orlp/foldhash/blob/master/README.md](https://github.com/orlp/foldhash/blob/master/README.md)
+
+> std::mem::size_of::<ahash::HashMap<u32, u32>>() = 64
+>
+> — [github.com/orlp/foldhash/blob/master/README.md](https://github.com/orlp/foldhash/blob/master/README.md)
+
+> as HashBrown now uses aHash as its hasher by default.
+>
+> — [github.com/tkaitchuck/aHash/blob/master/README.md](https://github.com/tkaitchuck/aHash/blob/master/README.md)
+
+> Changed the default hasher to foldhash. (#563)
+>
+> — [github.com/rust-lang/hashbrown/blob/main/CHANGELOG.md](https://github.com/rust-lang/hashbrown/blob/main/CHANGELOG.md)
+
+> Critical vulnerability: complete key recovery of AES-based hash through side-channels
+>
+> — [github.com/tkaitchuck/aHash/issues/163](https://github.com/tkaitchuck/aHash/issues/163)
+
+> aHash 0.8.12 AES path: a fixed 56-byte pair that collides for about 2^-19.7 of random keys
+>
+> — [github.com/tkaitchuck/aHash/issues/292](https://github.com/tkaitchuck/aHash/issues/292)
+
+</details>

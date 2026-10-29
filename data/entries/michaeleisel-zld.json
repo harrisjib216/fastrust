@@ -1,0 +1,68 @@
+{
+  "id": "https://github.com/michaeleisel/zld",
+  "name": "zld (faster fork of Apple ld64)",
+  "domain": "tooling",
+  "category": "linkers",
+  "baseline": "Apple's default macOS linker called through cc: ld-prime with Xcode 15 or later, ld64 when zld was current",
+  "verdict": "reject",
+  "verdict_reason": "zld claimed links at least 40% faster than ld64, but it was archived in February 2023 and its author points to lld instead. Apple replaced ld64 with ld-prime in Xcode 15, and Chromium now measures ld-prime as faster than lld, so the baseline zld beat is gone.",
+  "evidence_tier": "D",
+  "tier_reason": "The only number in text is a floor ('at least 40% faster'); the results themselves are an SVG chart.",
+  "claimed_speedup": "Linking at least 40% faster than Apple's linker (README text; full results in a chart)",
+  "workload": "Not stated in text; the README says zld is meant for debug builds, and the results are in an SVG chart",
+  "metric": "time (link)",
+  "hardware": "",
+  "os": "macOS",
+  "toolchain": "",
+  "benchmark_date": "",
+  "benchmark_url": "https://github.com/michaeleisel/zld/blob/master/README.md",
+  "repo_url": "https://github.com/michaeleisel/zld",
+  "docs_url": null,
+  "license": "MIT",
+  "usability": "copyable",
+  "language": "C++",
+  "platforms": "macOS; required a full Xcode install",
+  "install": "Archived; old prebuilt binaries on the GitHub releases page",
+  "maintenance_status": "abandoned",
+  "stars": 1192,
+  "last_commit": "2023-02-15",
+  "one_liner": "Archived fork of Apple's old ld64 that claimed links at least 40% faster; Xcode 15's ld-prime replaced the linker it improved on.",
+  "how_it_is_fast": "zld forked the last open-source release of Apple's ld64 and changed its hashing code for speed, keeping output otherwise byte-for-byte identical. It also kept caches between runs, so repeat links were faster than the first.",
+  "use_it_when": [
+    "None for new work"
+  ],
+  "skip_it_when": [
+    "Any build on Xcode 15 or later, where the default ld-prime replaced the ld64 baseline",
+    "Projects that need a maintained linker"
+  ],
+  "caveats": [
+    "Numbers are a chart image plus a 'not at least 40% faster' floor in text",
+    "Measured against ld64, which is no longer the default"
+  ],
+  "tradeoffs": [
+    "Archived and tied to an old ld64 version; may break with newer Xcode"
+  ],
+  "evidence": [
+    {
+      "url": "https://github.com/michaeleisel/zld/blob/master/README.md",
+      "quote": "## NOTE: zld is now archived, consider using lld instead."
+    },
+    {
+      "url": "https://github.com/michaeleisel/zld/blob/master/README.md",
+      "quote": "## A faster version of Apple's linker"
+    },
+    {
+      "url": "https://github.com/michaeleisel/zld/blob/master/README.md",
+      "quote": "Feel free to file an issue if you find that linking is not at least 40% faster for your case"
+    },
+    {
+      "url": "https://github.com/michaeleisel/zld/blob/master/README.md",
+      "quote": "Without a few optimizations around hashing, it would produce byte-for-byte the same executables as the open-source one."
+    },
+    {
+      "url": "https://chromium.googlesource.com/chromium/src.git/+/main/docs/apple_platform_linkers.md",
+      "quote": "Recent benchmarks show that Apple's new linker (ld-prime) is faster than LLD for local macOS development"
+    }
+  ],
+  "checked": "2026-10-28"
+}

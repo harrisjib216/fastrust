@@ -1,0 +1,75 @@
+{
+  "id": "https://github.com/fereidani/kanal",
+  "name": "kanal",
+  "domain": "concurrency-and-runtime",
+  "category": "channels",
+  "baseline": "std::sync::mpsc (Rust 1.85.1, crossbeam-based) and crossbeam-channel",
+  "verdict": "downgrade",
+  "verdict_reason": "In its own 2025 chart, kanal leads most sequential, MPSC and MPMC tests, including against std::sync::mpsc on a current toolchain. It does not lead everywhere: crossbeam-channel and std::sync::mpsc are ahead in some bounded SPSC tests. All numbers are chart-only and first-party.",
+  "evidence_tier": "D",
+  "tier_reason": "Public benchmark code with machine, rustc and OS stated, but the results are only a chart image.",
+  "claimed_speedup": "Chart only: messages per second in seq, SPSC, MPSC and MPMC tests (AMD Ryzen 9 9950X, rustc 1.85.1, Mar 19, 2025); no numbers in text.",
+  "workload": "fereidani/rust-channel-benchmarks: seq, SPSC, MPSC and MPMC over bounded (size 0, 1, N) and unbounded channels with empty, usize and 8-pointer-sized messages; sync and async variants; compared with crossbeam-channel, std::mpsc, flume, async-channel, futures-channel and Go.",
+  "metric": "throughput",
+  "hardware": "AMD Ryzen 9 9950X, 16 cores",
+  "os": "Ubuntu 24.04, Linux 6.11.0-19-generic",
+  "toolchain": "rustc 1.85.1; Go 1.24.1",
+  "benchmark_date": "2025-03-19",
+  "benchmark_url": "https://github.com/fereidani/kanal",
+  "repo_url": "https://github.com/fereidani/kanal",
+  "docs_url": "https://docs.rs/kanal",
+  "license": "MIT",
+  "usability": "copyable",
+  "language": "Rust",
+  "platforms": "All std targets",
+  "install": "cargo add kanal",
+  "maintenance_status": "active",
+  "stars": 1768,
+  "last_commit": "2026-07-19",
+  "one_liner": "MPMC channel with sync and async APIs that leads most of its own 2025 charts against std mpsc and crossbeam, though not bounded SPSC.",
+  "how_it_is_fast": "Messages no larger than a pointer are encoded into the pointer itself; larger ones are copied directly from the sender's stack to the receiver's, as Go does, so bounded(0) channels need no heap allocation. Channel state sits behind a short, specially tuned mutex whose hold time is predictable.",
+  "use_it_when": [
+    "MPSC or MPMC traffic where its chart shows the largest lead",
+    "Mixing sync and async endpoints on one channel"
+  ],
+  "skip_it_when": [
+    "Bounded single-producer single-consumer pipelines, where crossbeam-channel and std::sync::mpsc lead parts of its own chart",
+    "Code that cannot accept unsafe stack-to-stack copying in a dependency"
+  ],
+  "caveats": [
+    "Chart image only; no numbers in text.",
+    "First-party benchmark, one machine, no independent rerun found.",
+    "Async results run inside Tokio and are not directly comparable with the thread-based sync tests, as the README itself notes."
+  ],
+  "tradeoffs": [
+    "Relies on unsafe direct memory copies between stacks.",
+    "Still a 0.1.x crate."
+  ],
+  "evidence": [
+    {
+      "url": "https://github.com/fereidani/kanal",
+      "quote": "The fast sync and async channel that Rust deserves!"
+    },
+    {
+      "url": "https://github.com/fereidani/kanal",
+      "quote": "Results are based on how many messages can be passed in each scenario per second."
+    },
+    {
+      "url": "https://github.com/fereidani/kanal",
+      "quote": "AMD Ryzen 9 9950X 16-Core Processor"
+    },
+    {
+      "url": "https://github.com/fereidani/kanal",
+      "quote": "rustc 1.85.1 (4eb161250 2025-03-15)"
+    },
+    {
+      "url": "https://github.com/fereidani/kanal",
+      "quote": "Date: Mar 19, 2025"
+    },
+    {
+      "url": "https://github.com/fereidani/kanal",
+      "quote": "utilizing direct memory access to copy objects from the sender's stack or write directly to the receiver's stack"
+    }
+  ],
+  "checked": "2026-10-28"
+}

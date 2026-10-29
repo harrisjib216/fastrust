@@ -1,0 +1,98 @@
+{
+  "id": "https://github.com/etemesi254/zune-image#zune-png",
+  "name": "zune-png (PNG decoder)",
+  "domain": "numerics-and-media",
+  "category": "images",
+  "baseline": "png 0.18 (image-rs/png), the image crate's PNG decoder",
+  "verdict": "downgrade",
+  "verdict_reason": "In its author's current run zune-png is 1.11x faster than the png crate on a baseline 8-bit image and 1.67x faster on interlaced images, but png is faster on 16-bit images (1.14x) and palette images (1.24x). The default has caught up enough that the choice depends on the image type.",
+  "evidence_tier": "C",
+  "tier_reason": "First-party criterion results; the benchmark code is public but the machine is identified only as Darwin, with no CPU or rustc version.",
+  "claimed_speedup": "Decode time, image-rs/png vs zune-png: baseline 149.3 ms vs 135.0 ms, interlaced 8bpp 232.8 ms vs 139.7 ms (zune-png 1.11x and 1.67x faster); 16 bpp 163.7 ms vs 186.3 ms, palette 28.31 ms vs 35.21 ms (png 1.14x and 1.24x faster)",
+  "workload": "Decoding PNG files: 8-bit baseline, 8-bit Adam7 interlaced, 16-bit and palette images; criterion time per image.",
+  "metric": "time",
+  "hardware": "Not stated (Darwin)",
+  "os": "Darwin (macOS)",
+  "toolchain": "",
+  "benchmark_date": "2026-09-21",
+  "benchmark_url": "https://github.com/etemesi254/zune-image/blob/dev/benchmarks/benchmark-results.md",
+  "repo_url": "https://github.com/etemesi254/zune-image",
+  "docs_url": "https://docs.rs/zune-png",
+  "license": "MIT OR Apache-2.0 OR Zlib",
+  "usability": "copyable",
+  "language": "Rust",
+  "platforms": "Any; SSE and NEON intrinsics for unfiltering, scalar fallback",
+  "install": "cargo add zune-png",
+  "maintenance_status": "active",
+  "stars": 505,
+  "last_commit": "2026-10-24",
+  "one_liner": "Pure-Rust PNG/APNG decoder; faster than the png crate on 8-bit and interlaced images, slower on 16-bit and palette images.",
+  "how_it_is_fast": "zune-png pairs its own inflate implementation (zune-inflate) with SSE and NEON intrinsics for PNG unfiltering, the two stages that dominate PNG decode time.",
+  "use_it_when": [
+    "You decode many interlaced or 8-bit RGB/RGBA PNGs and PNG decoding shows up in profiles."
+  ],
+  "skip_it_when": [
+    "Your images are mostly 16-bit or palette-based; the png crate was faster there.",
+    "You decode through the image crate and do not want a second PNG decoder."
+  ],
+  "caveats": [
+    "Single first-party run on an unspecified Darwin machine; no x86_64 numbers are published alongside.",
+    "The png crate has itself become much faster: in the same run it decodes 2.0x to 3.3x faster than spng, while Google's 2022 benchmark had png slower than spng on large images.",
+    "The zune-image README says its decoders are \"some of the fastest\" without per-format qualifiers."
+  ],
+  "tradeoffs": [
+    "Expands images below 8 bits per pixel to 8 bits automatically.",
+    "Smaller user base than the png crate, which the image crate uses."
+  ],
+  "evidence": [
+    {
+      "url": "https://github.com/etemesi254/zune-image/blob/2f9086b07cdf5a36621ce18f79d310f99b751de9/benchmarks/benchmark-results.md",
+      "quote": "| **PNG decoding baseline**        | image-rs/png | 149.3 ms    | 40.12 MiB/s       | 1.11× slower      |"
+    },
+    {
+      "url": "https://github.com/etemesi254/zune-image/blob/2f9086b07cdf5a36621ce18f79d310f99b751de9/benchmarks/benchmark-results.md",
+      "quote": "|                                  | zune-png     | 135.0 ms    | 44.38 MiB/s       | **Winner**        |"
+    },
+    {
+      "url": "https://github.com/etemesi254/zune-image/blob/2f9086b07cdf5a36621ce18f79d310f99b751de9/benchmarks/benchmark-results.md",
+      "quote": "| **PNG decoding interlaced 8bpp** | image-rs/png | 232.8 ms    | 43.33 MiB/s       | 1.67× slower      |"
+    },
+    {
+      "url": "https://github.com/etemesi254/zune-image/blob/2f9086b07cdf5a36621ce18f79d310f99b751de9/benchmarks/benchmark-results.md",
+      "quote": "|                                  | zune-png     | 139.7 ms    | 72.22 MiB/s       | **Winner**        |"
+    },
+    {
+      "url": "https://github.com/etemesi254/zune-image/blob/2f9086b07cdf5a36621ce18f79d310f99b751de9/benchmarks/benchmark-results.md",
+      "quote": "| **PNG decoding  16 bpp**         | image-rs/png | 163.7 ms    | 46.92 MiB/s       | **Winner**        |"
+    },
+    {
+      "url": "https://github.com/etemesi254/zune-image/blob/2f9086b07cdf5a36621ce18f79d310f99b751de9/benchmarks/benchmark-results.md",
+      "quote": "|                                  | zune-png     | 186.3 ms    | 41.23 MiB/s       | 1.14× slower      |"
+    },
+    {
+      "url": "https://github.com/etemesi254/zune-image/blob/2f9086b07cdf5a36621ce18f79d310f99b751de9/benchmarks/benchmark-results.md",
+      "quote": "| **PNG decoding palette image**   | image-rs/png | 28.31 ms    | 184.1 MiB/s       | **Winner**        |"
+    },
+    {
+      "url": "https://github.com/etemesi254/zune-image/blob/2f9086b07cdf5a36621ce18f79d310f99b751de9/benchmarks/benchmark-results.md",
+      "quote": "|                                  | zune-png     | 35.21 ms    | 148.0 MiB/s       | 1.24× slower      |"
+    },
+    {
+      "url": "https://github.com/etemesi254/zune-image/blob/2f9086b07cdf5a36621ce18f79d310f99b751de9/benchmarks/benchmark-results.md",
+      "quote": "|                                  | spng         | 297.4 ms    | 20.15 MiB/s       | 2.20× slower      |"
+    },
+    {
+      "url": "https://github.com/etemesi254/zune-image/blob/2f9086b07cdf5a36621ce18f79d310f99b751de9/benchmarks/benchmark-results.md",
+      "quote": "| Benchmark | Library | Darwin Time | Darwin Throughput | Darwin Comparison |"
+    },
+    {
+      "url": "https://github.com/google/decoder-benchmarks-for-rust",
+      "quote": "| venice-2000x3000.png | 128.9 | 102.4 | 126% |"
+    },
+    {
+      "url": "https://github.com/etemesi254/zune-image",
+      "quote": "Fast image decoders and encoders: `zune-*` image decoders are some of the fastest,"
+    }
+  ],
+  "checked": "2026-10-28"
+}

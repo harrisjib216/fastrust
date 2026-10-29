@@ -1,0 +1,95 @@
+{
+  "id": "https://github.com/fjall-rs/fjall",
+  "name": "fjall (pure-Rust LSM-tree)",
+  "domain": "storage",
+  "category": "embedded-databases",
+  "baseline": "RocksDB through rust-rocksdb 0.22, with an LRU block cache and bloom filters",
+  "verdict": "downgrade",
+  "verdict_reason": "In redb's third-party comparison fjall 2.11 beat RocksDB on batch writes (1.28x), random reads (1.34x) and removals (1.15x), but was slower on bulk load and durable single-row commits, and compacted to 2.2x RocksDB's size. Fjall's own 3.0 benchmarks exist only as charts; its text backs a large build-time and binary-size advantage.",
+  "evidence_tier": "A",
+  "tier_reason": "Third-party benchmark (redb's author) with public source, pinned toolchain, and stated CPU and SSD.",
+  "claimed_speedup": "vs RocksDB: batch writes 353 vs 451 ms (1.28x), random reads 2177 vs 2911 ms (1.34x), removals 6004 vs 6900 ms (1.15x); slower on bulk load (18619 vs 13969 ms) and individual writes (3488 vs 2432 ms); compacted size 1000.95 MiB vs 454.71 MiB. Build: about 3.5s and a ~2.2 MB binary vs around 40s and ~12 MB for a RocksDB hello-world (ratios derived from page data).",
+  "workload": "5 million random 24-byte keys with 150-byte values: bulk load, 1,000 durable single-insert transactions, 100 batches of 1,000, 1 million random reads, removals; 4 GB cache.",
+  "metric": "time",
+  "hardware": "AMD Ryzen 9 9950X3D, Samsung 9100 PRO NVMe",
+  "os": "",
+  "toolchain": "rustc 1.89, fjall 2.11, rocksdb crate 0.22, cargo bench release profile",
+  "benchmark_date": "2025-08-08",
+  "benchmark_url": "https://github.com/cberner/redb/blob/88c66fbb145948a4a5d1e4408992e0978df92766/README.md",
+  "repo_url": "https://github.com/fjall-rs/fjall",
+  "docs_url": "https://docs.rs/fjall",
+  "license": "MIT OR Apache-2.0",
+  "usability": "copyable",
+  "language": "Rust",
+  "platforms": "Any Rust target with a file system; single process per database",
+  "install": "cargo add fjall",
+  "maintenance_status": "active",
+  "stars": 2406,
+  "last_commit": "2026-10-25",
+  "one_liner": "Pure-Rust LSM-tree engine; beats RocksDB on batch writes and reads in one comparison, builds in seconds, compacts worse.",
+  "how_it_is_fast": "Writes go to a journal and memtable and are flushed as sorted, LZ4-compressed tables, so batched writes are sequential I/O. Fjall 3 adds blocks with embedded binary-search indexes and optional hash indexes so cached reads skip deserialization. Being about 42k lines of Rust, it compiles far faster than RocksDB's C++.",
+  "use_it_when": [
+    "Write-heavy or batch-ingest embedded storage where you want an LSM without a C++ build",
+    "Build time and binary size matter (CI, small containers)"
+  ],
+  "skip_it_when": [
+    "Many small durable commits: redb and LMDB were faster",
+    "Disk space after compaction matters: RocksDB compacted to less than half fjall's size",
+    "Several processes must open the same database"
+  ],
+  "caveats": [
+    "The third-party numbers are for fjall 2.11; fjall 3 (January 2026) reworked the block format and has not been rerun in redb's README",
+    "Fjall's own benchmarks for 3.0 are published only as charts"
+  ],
+  "tradeoffs": [
+    "Default durability flushes to OS buffers, not disk, like RocksDB; call persist for fsync",
+    "Fewer features than RocksDB (no merge operator or range deletes yet)"
+  ],
+  "evidence": [
+    {
+      "url": "https://github.com/cberner/redb/blob/88c66fbb145948a4a5d1e4408992e0978df92766/README.md",
+      "quote": "| batch writes | 1595ms | 942ms | 451ms | **353ms** | 2625ms |"
+    },
+    {
+      "url": "https://github.com/cberner/redb/blob/88c66fbb145948a4a5d1e4408992e0978df92766/README.md",
+      "quote": "| random reads | 1138ms | **637ms** | 2911ms | 2177ms | 4283ms |"
+    },
+    {
+      "url": "https://github.com/cberner/redb/blob/88c66fbb145948a4a5d1e4408992e0978df92766/README.md",
+      "quote": "| removals | 23297ms | 10435ms | 6900ms | **6004ms** | 10323ms |"
+    },
+    {
+      "url": "https://github.com/cberner/redb/blob/88c66fbb145948a4a5d1e4408992e0978df92766/README.md",
+      "quote": "| bulk load | 17063ms | **9232ms** | 13969ms | 18619ms | 15341ms |"
+    },
+    {
+      "url": "https://github.com/cberner/redb/blob/88c66fbb145948a4a5d1e4408992e0978df92766/README.md",
+      "quote": "| individual writes | **920ms** | 1598ms | 2432ms | 3488ms | 7040ms |"
+    },
+    {
+      "url": "https://github.com/cberner/redb/blob/88c66fbb145948a4a5d1e4408992e0978df92766/README.md",
+      "quote": "| compacted size | 1.69 GiB | 1.26 GiB | **454.71 MiB** | 1000.95 MiB | 556.85 MiB |"
+    },
+    {
+      "url": "https://github.com/cberner/redb/blob/88c66fbb145948a4a5d1e4408992e0978df92766/README.md",
+      "quote": "Results collected on a Ryzen 9950X3D with Samsung 9100 PRO NVMe."
+    },
+    {
+      "url": "https://github.com/cberner/redb/blob/d6773ef554d059e3f8ca357fe4931f2c5995c340/crates/redb-bench/Cargo.toml",
+      "quote": "fjall = \"=2.11\""
+    },
+    {
+      "url": "https://fjall-rs.github.io/post/fjall-3/",
+      "quote": "needs around 40s (pinned at 100% usage over all its cores) to compile a"
+    },
+    {
+      "url": "https://fjall-rs.github.io/post/fjall-3/",
+      "quote": "Rust project using RocksDB, building a ~12 MB binary."
+    },
+    {
+      "url": "https://fjall-rs.github.io/post/fjall-3/",
+      "quote": "Embedding Fjall v3 currently takes around 3.5s, and gives you a ~2.2 MB binary"
+    }
+  ],
+  "checked": "2026-10-28"
+}

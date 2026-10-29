@@ -1,0 +1,106 @@
+# regex 1.9+ (regex-automata meta engine rewrite)
+
+<sub>[fastrust](../../../README.md) › [Catalog](../../README.md) › [Text processing](../README.md) › [Regular expressions](README.md)</sub>
+
+**Tier C** (first-party numbers) · ✅ Holds up · Open source · `Rust` · `MIT OR Apache-2.0` · 🟢 active
+
+> The regex crate's 1.9 rewrite onto regex-automata: the default Rust regex engine searches about 1.5x faster on average than 1.7.
+
+| | |
+|---|---|
+| **Beats** | regex 1.7.3, the last release before the internals were rebuilt on regex-automata |
+| **Claimed result** | Search: 1.5x faster on average over 242 benchmarks (geometric-mean speed ratio 1.08 vs 2.61); dictionary of about 2,500 words: 712.6 MB/s vs 29.3 KB/s; literal-alternate sherlock-ru: 6.4 GB/s vs 2.6 GB/s. Regex compile time regressed (geometric mean 1.46 vs 1.07 over 28 benchmarks). |
+| **Workload** | rebar benchmark definitions: literal, literal-alternation, date, Unicode, capture and dictionary searches over English, Russian and Chinese subtitle haystacks; search time and regex compile time ranked separately. |
+| **Metric** | throughput |
+| **Measured** | 2023-07-02 |
+| **Adoption** | 4.0k stars |
+| **Last commit** | 2026-10-28 |
+| **Platforms** | All Rust targets; SIMD literal prefilters (through memchr and aho-corasick) on x86_64, aarch64 and wasm32 |
+| **Install** | cargo add regex (1.9 or later) |
+| **Links** | [repository](https://github.com/rust-lang/regex) · [documentation](https://docs.rs/regex) · [benchmark](https://blog.burntsushi.net/regex-internals/) |
+
+## Verdict
+
+Across 242 rebar search benchmarks the rewritten engine has a geometric-mean speed ratio of 1.08 against 2.61 for regex 1.7.3, which the author summarizes as 1.5x faster on average, and the December 2025 rebar run still shows large gains on literal alternations and dictionary-style patterns. Regex construction got slower and a few literal searches regressed slightly.
+
+**Why tier C:** The rebar harness and recorded CSVs are public, but the regex author wrote both the crate and the harness and states no CPU, OS or rustc flags.
+
+## Use it when
+
+- Any project still on regex 1.7 or earlier: the upgrade is a semver-compatible version bump
+- Patterns that are large alternations of words or literals, where 1.7.3 dropped to KB/s in rebar's dictionary benchmark
+
+## Skip it when
+
+- Regex construction dominates (many patterns built and used once): compile-time geometric mean went from 1.07 to 1.46
+- Binary size or build time is the constraint; regex-lite trades search speed for both
+
+## How it is fast
+
+Version 1.9 moved the internals to regex-automata's meta engine, which chooses per regex and per search among a PikeVM, a bounded backtracker, a one-pass DFA, a lazy DFA and an optional full DFA. Literal prefilters find candidate positions before any automaton runs, and large alternations of literals are rewritten into a trie-like form so the engine does not walk every branch at every position.
+
+## What it costs
+
+- More code: the author notes the rewrite brought bigger binaries and longer compile times
+- Slower Regex::new on average
+
+## Problems with the evidence
+
+- The 242-benchmark comparison labels the new engine 1.8.4 because it ran on a pre-release shortly before 1.9 shipped
+- Geometric means hide regressions: in the 2025-12-19 rebar run, 1.7.3 still beats regex 1.12.2 on literal-alternate sherlock-en (15.1 GB/s vs 12.0 GB/s)
+- No hardware, OS or compiler flags stated in the blog post or the rebar README
+
+## Evidence
+
+<details>
+<summary>12 quotes from the sources, checked 2026-10-28</summary>
+
+> Across 242 benchmarks, regex 1.9 is on average 1.5 times faster than regex 1.7.3 for search times.
+>
+> — [blog.burntsushi.net/regex-internals/](https://blog.burntsushi.net/regex-internals/)
+
+> rust/regex     1.8.4    1.08                            242
+>
+> — [blog.burntsushi.net/regex-internals/](https://blog.burntsushi.net/regex-internals/)
+
+> rust/regexold  1.7.3    2.61                            242
+>
+> — [blog.burntsushi.net/regex-internals/](https://blog.burntsushi.net/regex-internals/)
+
+> rust/regexold  1.7.3    1.07                            28
+>
+> — [blog.burntsushi.net/regex-internals/](https://blog.burntsushi.net/regex-internals/)
+
+> rust/regex     1.8.4    1.46                            28
+>
+> — [blog.burntsushi.net/regex-internals/](https://blog.burntsushi.net/regex-internals/)
+
+> It usually results in more code, which means bigger binary sizes and higher compile times.
+>
+> — [blog.burntsushi.net/regex-internals/](https://blog.burntsushi.net/regex-internals/)
+
+> The dictionary is made up of about 2,500 words, where every word is at least 15 bytes in length.
+>
+> — [github.com/BurntSushi/rebar/blob/master/README.md](https://github.com/BurntSushi/rebar/blob/master/README.md)
+
+> | rust/regex | **712.6 MB/s** | 186.8 MB/s | 7.71ms | **13.06ms** |
+>
+> — [github.com/BurntSushi/rebar/blob/master/README.md](https://github.com/BurntSushi/rebar/blob/master/README.md)
+
+> | rust/regexold | 29.3 KB/s | - | 6.63ms | - |
+>
+> — [github.com/BurntSushi/rebar/blob/master/README.md](https://github.com/BurntSushi/rebar/blob/master/README.md)
+
+> | rust/regex | 12.0 GB/s | 2.8 GB/s | **6.4 GB/s** | 1512.9 MB/s | 13.6 GB/s |
+>
+> — [github.com/BurntSushi/rebar/blob/master/README.md](https://github.com/BurntSushi/rebar/blob/master/README.md)
+
+> | rust/regexold | **15.1 GB/s** | 2.7 GB/s | 2.6 GB/s | 448.4 MB/s | 18.3 GB/s |
+>
+> — [github.com/BurntSushi/rebar/blob/master/README.md](https://github.com/BurntSushi/rebar/blob/master/README.md)
+
+> curated/01-literal/sherlock-en,count,0.1.0 (rev 79305bcb5f),rust/regexold,1.7.3
+>
+> — [github.com/BurntSushi/rebar/blob/master/record/curated/2025-12-19/r…](https://github.com/BurntSushi/rebar/blob/master/record/curated/2025-12-19/rust-regexold.csv)
+
+</details>

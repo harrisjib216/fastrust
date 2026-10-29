@@ -1,0 +1,77 @@
+{
+  "id": "https://github.com/killingspark/zstd-rs",
+  "name": "ruzstd (pure-Rust zstd)",
+  "domain": "compression",
+  "category": "other-codecs",
+  "baseline": "The zstd crate's bindings to the C reference zstd library",
+  "verdict": "reject",
+  "verdict_reason": "No pure-Rust zstd beats the C bindings. ruzstd's own README puts its decoder 1.4x to 3.5x slower, its encoder lacks the default level, and Trifecta's newer libzstd-rs-sys port is about 3% slower than C by default.",
+  "evidence_tier": "C",
+  "tier_reason": "First-party measurements taken with the time utility, with no hardware or compiler stated.",
+  "claimed_speedup": "None: decoder about 3.5 times slower than C zstd on enwik9 and about 1.4 times slower on less compressible data; libzstd-rs-sys decompression a few percent (~3%) slower than C by default.",
+  "workload": "Decoding enwik9.zst and an Ubuntu ISO compressed with zstd, from a ramfs.",
+  "metric": "time",
+  "hardware": "",
+  "os": "",
+  "toolchain": "",
+  "benchmark_date": "2019",
+  "benchmark_url": "https://github.com/KillingSpark/zstd-rs/blob/da53f315692c1340c5e4d0998e249c1ff2372053/Readme.md",
+  "repo_url": "https://github.com/KillingSpark/zstd-rs",
+  "docs_url": "https://docs.rs/ruzstd",
+  "license": "MIT",
+  "usability": "copyable",
+  "language": "Rust",
+  "platforms": "Any Rust target (pure Rust, no C toolchain)",
+  "install": "cargo add ruzstd",
+  "maintenance_status": "active",
+  "stars": 455,
+  "last_commit": "2026-10-16",
+  "one_liner": "Pure-Rust zstd decoder and partial encoder; 1.4x to 3.5x slower than the C library behind the zstd crate.",
+  "how_it_is_fast": "It is not faster. It is a clean-room Rust implementation of RFC 8878 without the C library's hand-tuned decoding loops; its value is portability and no C toolchain.",
+  "use_it_when": [
+    "You need zstd decoding on wasm, no_std or targets without a C toolchain and can accept slower decoding"
+  ],
+  "skip_it_when": [
+    "Speed matters: use the zstd crate (C bindings)",
+    "You need compression levels beyond Fastest; Default and higher are not implemented"
+  ],
+  "caveats": [
+    "The README's speed figures date from 2019 and were not rerun for later releases",
+    "Single-run time measurements with no hardware named"
+  ],
+  "tradeoffs": [
+    "Encoder supports only uncompressed and Fastest (about level 1) blocks",
+    "libzstd-rs-sys can match C only with an unsafe-performance-experimental flag that drops four bounds checks"
+  ],
+  "evidence": [
+    {
+      "url": "https://github.com/KillingSpark/zstd-rs/blob/da53f315692c1340c5e4d0998e249c1ff2372053/Readme.md",
+      "quote": "In terms of speed, `ruzstd` is behind the original C implementation"
+    },
+    {
+      "url": "https://github.com/KillingSpark/zstd-rs/blob/da53f315692c1340c5e4d0998e249c1ff2372053/Readme.md",
+      "quote": "decoding the same enwik9.zst file from a ramfs"
+    },
+    {
+      "url": "https://github.com/KillingSpark/zstd-rs/blob/da53f315692c1340c5e4d0998e249c1ff2372053/Readme.md",
+      "quote": "my decoder is about 3.5 times slower."
+    },
+    {
+      "url": "https://github.com/KillingSpark/zstd-rs/blob/da53f315692c1340c5e4d0998e249c1ff2372053/Readme.md",
+      "quote": "my decoder comes close to only being 1.4 times slower."
+    },
+    {
+      "url": "https://github.com/KillingSpark/zstd-rs/blob/da53f315692c1340c5e4d0998e249c1ff2372053/Readme.md",
+      "quote": "It also provides a compressor which is usable, but it does not yet reach the speed, ratio or configurability of the original zstd library."
+    },
+    {
+      "url": "https://trifectatech.org/blog/announcing-zstandard-in-rust/",
+      "quote": "By default decompression performance of our implementation is a few percent slower than the C reference implementation."
+    },
+    {
+      "url": "https://trifectatech.org/blog/announcing-zstandard-in-rust/",
+      "quote": "For most users a ~3% performance regression is likely an acceptable price to pay for increased memory safety."
+    }
+  ],
+  "checked": "2026-10-28"
+}

@@ -1,0 +1,63 @@
+{
+  "id": "https://github.com/mozilla/sccache",
+  "name": "sccache (shared compilation cache)",
+  "domain": "tooling",
+  "category": "test-runners-and-caching",
+  "baseline": "cargo build with no shared cache: every machine or CI job recompiles every dependency",
+  "verdict": "downgrade",
+  "verdict_reason": "sccache can skip recompiling crates it has seen before, but it publishes no Rust timing numbers, and its own docs exclude much of a Rust build from caching: crates that invoke the linker (bin, dylib, cdylib, proc-macro) and anything compiled incrementally. Expect gains on clean CI builds of dependencies, not on local incremental rebuilds.",
+  "evidence_tier": "D",
+  "tier_reason": "No benchmark numbers from the project or from any source found.",
+  "claimed_speedup": "No published numbers; the README says it avoids compilation when possible",
+  "workload": "None published: rebuilding Rust crates with a shared cache",
+  "metric": "build time",
+  "hardware": "",
+  "os": "",
+  "toolchain": "",
+  "benchmark_date": "",
+  "benchmark_url": "https://github.com/mozilla/sccache/blob/main/README.md",
+  "repo_url": "https://github.com/mozilla/sccache",
+  "docs_url": "https://github.com/mozilla/sccache/blob/main/docs/Rust.md",
+  "license": "Apache-2.0",
+  "usability": "copyable",
+  "language": "Rust",
+  "platforms": "Linux, macOS and Windows; local disk or several cloud storage backends",
+  "install": "cargo install sccache (or a prebuilt binary); set RUSTC_WRAPPER=sccache",
+  "maintenance_status": "active",
+  "stars": 7851,
+  "last_commit": "2026-10-26",
+  "one_liner": "Compiler-output cache that wraps rustc; helps clean CI builds of dependencies but cannot cache binaries, proc macros or incremental crates.",
+  "how_it_is_fast": "sccache sits between Cargo and rustc as a compiler wrapper. When an invocation matches one it has seen, it returns the stored output instead of compiling; a shared backend lets CI jobs and developers reuse each other's dependency builds.",
+  "use_it_when": [
+    "Ephemeral CI runners that rebuild the same dependencies on every job",
+    "Teams sharing a cache backend across machines"
+  ],
+  "skip_it_when": [
+    "Local incremental dev builds: incrementally compiled crates are not cached",
+    "Workspaces dominated by bin, cdylib or proc-macro crates",
+    "Slow network links to the cache backend"
+  ],
+  "caveats": [
+    "No published Rust numbers found from the project or third parties",
+    "Hit rates depend on identical flags, paths and toolchains"
+  ],
+  "tradeoffs": [
+    "Cached crates must be built without incremental compilation",
+    "Storage and network cost for shared backends"
+  ],
+  "evidence": [
+    {
+      "url": "https://github.com/mozilla/sccache/blob/main/README.md",
+      "quote": "It is used as a compiler wrapper and avoids compilation when possible"
+    },
+    {
+      "url": "https://github.com/mozilla/sccache/blob/main/README.md",
+      "quote": "Crates that invoke the system linker cannot be cached. This includes `bin`, `dylib`, `cdylib`, and `proc-macro` crates."
+    },
+    {
+      "url": "https://github.com/mozilla/sccache/blob/main/README.md",
+      "quote": "Incrementally compiled crates cannot be cached."
+    }
+  ],
+  "checked": "2026-10-28"
+}

@@ -1,0 +1,74 @@
+{
+  "id": "std:slice#sort",
+  "name": "std slice::sort (driftsort, Rust 1.81)",
+  "domain": "collections",
+  "category": "sorting-and-searching",
+  "baseline": "slice::sort before Rust 1.81 (TimSort-style merge sort)",
+  "verdict": "confirm",
+  "verdict_reason": "On Zen 3, driftsort sorts random u64 inputs about 2.4x faster than the old stable sort for 10^4 to 10^6 elements, and low-cardinality inputs up to 13x to 17x faster. It is std's stable sort since 1.81, so third-party stable sorts benchmarked against older std overstate their lead.",
+  "evidence_tier": "A",
+  "tier_reason": "Public benchmark code (sort-research-rs) with CPU, OS and rustc version stated for three machines; the authors also wrote the std change.",
+  "claimed_speedup": "Random u64: about 2.4x throughput for N > 1e4 and <= 1e6; random_d20 and random_p5 patterns: about 13x and 17x at 1e6 elements (Zen 3). Binary size per u64 instantiation 2335 -> 5294 bytes (release).",
+  "workload": "Stable sort of u64, i32, String, a 1 KiB struct and f128-like floats across patterns (random, low-cardinality, partially sorted, ascending, descending), lengths up to 1e7.",
+  "metric": "throughput",
+  "hardware": "AMD Ryzen 9 5900X (Zen 3); Intel i7-5500U; Apple M1 Pro",
+  "os": "Linux 6.6 (Zen 3); Linux 5.19; macOS (Darwin 22.6.0)",
+  "toolchain": "rustc 1.77.0-nightly (6ae4cfbbb 2024-01-17)",
+  "benchmark_date": "2024-01",
+  "benchmark_url": "https://github.com/Voultapher/sort-research-rs/blob/main/writeup/driftsort_introduction/text.md",
+  "repo_url": null,
+  "docs_url": "https://doc.rust-lang.org/std/primitive.slice.html#method.sort",
+  "license": "MIT OR Apache-2.0",
+  "usability": "platform",
+  "language": "Rust",
+  "platforms": "All targets",
+  "install": "built into std since 1.81",
+  "maintenance_status": "active",
+  "stars": null,
+  "last_commit": "",
+  "one_liner": "Since Rust 1.81, slice::sort is driftsort: about 2.4x faster on random u64 and far faster on inputs with many duplicates.",
+  "how_it_is_fast": "driftsort combines run detection from merge sort with a stable quicksort for unsorted regions, so already-sorted runs are kept and the rest is partitioned. Remembering earlier pivots lets it filter out values that repeat, which turns low-cardinality inputs into near-linear work. A small-sort tuned for superscalar CPUs replaces the old insertion-sort-heavy inner loop.",
+  "use_it_when": [
+    "Default stable sorting on any type; there is little left to gain from third-party comparison sorts."
+  ],
+  "skip_it_when": [
+    "Binary size matters more than speed (embedded, Wasm): each instantiation is larger; the authors point to tiny_sort for that case.",
+    "Large integer arrays where a radix sort applies."
+  ],
+  "caveats": [
+    "Numbers are from the authors' own suite, measured on a 2024 nightly before the merge.",
+    "rustc-perf showed compile-time instruction-count regressions on the PR, mostly from extra code generated per sort instantiation."
+  ],
+  "tradeoffs": [
+    "Binary size grows (2335 -> 5294 bytes per u64 instantiation in release).",
+    "Allocates a buffer of N elements up to 8 MB, then N/2, instead of the old N/2.",
+    "Panics when an Ord implementation violates strict weak ordering, instead of returning arbitrary order."
+  ],
+  "evidence": [
+    {
+      "url": "https://github.com/Voultapher/sort-research-rs/blob/main/writeup/driftsort_introduction/text.md",
+      "quote": "random shows a fairly flat ~2.4x throughput improvement for N > 1e4 and <= 1e6."
+    },
+    {
+      "url": "https://github.com/Voultapher/sort-research-rs/blob/main/writeup/driftsort_introduction/text.md",
+      "quote": "random_d20 and random_p5 peak at 1e6, with a respective improvement of ~13x and ~17x."
+    },
+    {
+      "url": "https://github.com/Voultapher/sort-research-rs/blob/main/writeup/driftsort_introduction/text.md",
+      "quote": "release                      | `u64`    | 2335                 | 25520                  | 5294"
+    },
+    {
+      "url": "https://github.com/Voultapher/sort-research-rs/blob/main/writeup/driftsort_introduction/text.md",
+      "quote": "rustc 1.77.0-nightly (6ae4cfbbb 2024-01-17)"
+    },
+    {
+      "url": "https://github.com/Voultapher/sort-research-rs/blob/main/writeup/driftsort_introduction/text.md",
+      "quote": "AMD Ryzen 9 5900X 12-Core Processor (Zen 3 micro-architecture)"
+    },
+    {
+      "url": "https://blog.rust-lang.org/2024/09/05/Rust-1.81.0/",
+      "quote": "Both the stable and unstable sort implementations in the standard library have been updated to new algorithms, improving their runtime performance and compilation time."
+    }
+  ],
+  "checked": "2026-10-28"
+}
